@@ -46,16 +46,25 @@ async function loginUser(): Promise<User | null> {
 }
 
 async function createAccount(user: User) {
-  console.log("🏦 Create Bank Account");
-  const accountNumber = await askQuestion("Enter account number: ");
-  const currency = await askQuestion("Enter currency (e.g., USD, EUR): ");
-  const balance = parseFloat(await askQuestion("Enter initial balance: "));
+    console.log("🏦 Create Bank Account");
+    const accountNumber: string = await askQuestion("Enter account number: ");
+    const currency: string = await askQuestion("Enter currency (e.g., USD, EUR): ");
+    const balanceInput: string = await askQuestion("Enter initial balance: ");
+    const balance: number = parseFloat(balanceInput);
+    const bankName: string = await askQuestion("Enter bank name: "); // Get bank name
+  
+    if (isNaN(balance)) {
+      console.log("❌ Invalid balance amount. Please enter a number.");
+      return;
+    }
+  
+    const account = new Account(accountNumber, balance, currency, bankName); // Correct parameter order
+    db.addAccount(account);
+  
+    console.log(`✅ Account created for ${user.username} with ${balance} ${currency} at ${bankName}`);
+  }
+  
 
-  const account = new Account(accountNumber, currency, balance, user.username);
-  db.addAccount(account);
-
-  console.log(`✅ Account created for ${user.username} with ${balance} ${currency}`);
-}
 
 async function main() {
   console.log("\n💰 Smart Expense Tracker 💰");
