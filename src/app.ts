@@ -66,7 +66,7 @@ async function createAccount(user: User) {
 
 
 async function main() {
-  console.log("\n💰 Smart Expense Tracker");
+  console.log("\n Smart Expense Tracker");
   console.log("1. Register");
   console.log("2. Login");
   console.log("3. Exit");
@@ -83,11 +83,11 @@ async function main() {
       }
       break;
     case "3":
-      console.log("👋 Goodbye!");
+      console.log("Goodbye!");
       rl.close();
       return;
     default:
-      console.log("❌ Invalid option. Try again.");
+      console.log("Invalid option. Try again.");
   }
   main();
 }
