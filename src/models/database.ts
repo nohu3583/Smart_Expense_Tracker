@@ -1,10 +1,13 @@
 import { User } from "./user";
 import {Account} from "./account";
+import { Expense } from "./expense";
 
 export class Database {
     private static instance: Database;
     private users: User[] = [];
     private accounts: Account[] = [];
+    private expenses: Expense[] = [];
+
   
     private constructor() {} // Singleton pattern
   
@@ -30,6 +33,26 @@ export class Database {
     getAccounts(): Account[] {
       return this.accounts;
     }
+
+    addExpense(expense: Expense): void {
+        this.expenses.push(expense);
+    }
+
+    filterExpensesByCategory(category: string): Expense[] {
+        return this.expenses.filter(expense => expense.category === category);
+    }
+
+    filterExpensesByDate(date: Date): Expense[] {
+        return this.expenses.filter(expense => expense.date === date);
+    }
+
+    filterExpensesByAmount(amount: number): Expense[] {
+        return this.expenses.filter(expense => expense.amount === amount);
+    }
+    getExpenses(): Expense[] {
+        return this.expenses;
+    }
+
   }
   
   
