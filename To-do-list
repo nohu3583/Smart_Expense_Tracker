@@ -1,0 +1,33 @@
+A to do list for the project and aslo planing for project:
+
+* Defining our project scope (1 day) - Done 
+* Set up initial project structure (1 day) - Done
+* Data base setup and user login (3 day) - Database almost done.
+* Expense categories and logging (3 day)
+* Data visualization (2 day)
+* Alert and notification system (2 day)
+* csv import/export (2)
+* Testing and bug fixes (3)
+* Latex and presentation (4)
+
+If we have more time than estimated remaining we will add multi user support.
+
+Who does what:
+* Defining our project scope - Everyone
+* Set up initial project structure - Everone
+* Data base setup- Noah
+* Expense categories and user login & logging - Oskar/Iliya 
+* Data visualization (2 day) - Oskar/Iliya
+* Alert and notification system (2 day) - Oskar/Iliya
+* csv import/export (2) - Noah
+* Testing and bug fixes (3) - Everyone
+* Latex and presentation (4) - Everyone
+
+Need to add which modules to use in the project, for following points:
+* Data visualization - module for presentation of data eg charts. 
+* csv import/export - module for getting data from csv
+* Alert and notification system (2 day) 
+
+List of modules that need to be imported and how to use them:
+* Jest (for testing)
+
