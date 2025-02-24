@@ -1,0 +1,5 @@
+Solve the issue with no user logged in showing up on wrong call
+Currency API, add this feature
+Option 3 needs to add break if not logged in. 
+Check on new menu, where loggin is only available if account has been created'
+Show created usernames.

@@ -2,6 +2,8 @@ import * as readline from 'readline';
 import {Database} from './models/database';
 import {User} from './models/user';
 import {Account} from './models/account';
+import {Expense} from './models/expense';
+import { get } from 'http';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -45,6 +47,20 @@ async function loginUser(): Promise<User | null> {
   }
 }
 
+async function logoutUser()  {
+  const user_id = db.get_active_account();
+  const user = db.findUser(user_id);
+
+  if (user) {
+    user.change_account_status(user.logged_in);
+    console.log("Logout successful!");
+    rl.close();
+  } else {
+    console.log("No user logged in");
+    return;
+  }
+}    
+
 async function createAccount(user: User) {
     console.log(" Create Bank Account");
     const accountNumber: string = await askQuestion("Enter account number: ");
@@ -64,25 +80,36 @@ async function createAccount(user: User) {
     console.log(`Account created for ${user.username} with ${balance} ${currency} at ${bankName}`);
 }
 
-async function addExpense(expense:number) {
-  const account_id = 
-  console.log("")
+async function addExpense() {
+  if (!db.get_active_account()) {
+    console.log("No user logged in. Please login first.");
+    
+  }
+  else {
+  const account_id = db.get_active_account();
+  console.log("Add expense");
   const description: string = await askQuestion("Describe your purchase: ");
   const amount_input: string = await askQuestion("How much was it? ");
-  const amount: number = parseFloat(amount_input);
-  const currency: string = await askQuestion("In what currency? ");
+  let amount: number = parseFloat(amount_input);
+  let currency: string = await askQuestion("In what currency? ");
   const date_input: string = await askQuestion("When was the purchase made?(format: ÅÅÅÅ-MM-DD) ");
-<<<<<<< HEAD
-  const date: Date = Date.parse(date_input);
-  const account_currency = db.get_currency_from_account();
-  if (currency !== ) {
-
-  }
-=======
   const date: Date = new Date(Date.parse(date_input));
->>>>>>> 8f54a97aabd77d6498fa60de40ed61622108209a
+  const category: string = await askQuestion("What category does this fall under? ");
 
-  
+  if (isNaN(amount)) {
+    console.log("Invalid amount. Please enter a number.");
+    return;
+  }
+  if (currency !== db.get_currency_from_account(account_id)) {
+    const currency_api_data = await fetch(`https://api.exchangeratesapi.io/latest?base=${currency}`);
+    const exchangeRate = 1; //placeholder
+    amount = amount * exchangeRate;
+    currency = db.get_currency_from_account(account_id);   
+  }
+  const expense= new Expense(description, amount, date, category, currency, account_id);
+  db.addExpense(expense);
+  console.log(`Expense added for ${amount} ${currency} on ${date} in ${category}`);
+  }
 }
 
 
@@ -90,7 +117,10 @@ async function main() {
   console.log("\n Smart Expense Tracker");
   console.log("1. Register");
   console.log("2. Login");
-  console.log("3. Exit");
+  console.log("3. Add Expense");
+  console.log("4. Logout");
+  console.log("5. Exit");
+  
   
   const choice = await askQuestion("Choose an option: ");
   switch (choice) {
@@ -104,6 +134,12 @@ async function main() {
       }
       break;
     case "3":
+      await addExpense();
+      break;
+    case "4":
+      logoutUser();
+      break;
+    case "5":
       console.log("Goodbye!");
       rl.close();
       return;

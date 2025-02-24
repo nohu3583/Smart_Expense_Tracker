@@ -16,7 +16,7 @@ Who does what:
 * Defining our project scope - Everyone
 * Set up initial project structure - Everone
 * Data base setup and login- Noah - Done
-* Expense categories & expense logging - Oskar/Iliya 
+* Expense categories & expense logging - Oskar/Iliya. Expense loggin done. Expense categories to be done 
 * Data visualization (2 day) - Oskar/Iliya
 * Alert and notification system (2 day) - Oskar/Iliya
 * csv import/export (2) - Noah
@@ -30,4 +30,6 @@ Need to add which modules to use in the project, for following points:
 
 List of modules that need to be imported and how to use them:
 * Jest (for testing)
+
+
 

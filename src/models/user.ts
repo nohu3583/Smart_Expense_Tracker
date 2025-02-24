@@ -19,10 +19,6 @@ export class User {
       this.account_id = account_number;
     }
 
-    account_status() : boolean {
-      return this.logged_in;
-    }
-
     get_account_number() : string {
       return this.account_id;
     }

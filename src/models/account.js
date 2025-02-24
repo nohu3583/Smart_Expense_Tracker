@@ -21,6 +21,9 @@ var Account = /** @class */ (function () {
         console.log("Withdrawn ".concat(amount, " from ").concat(this.account_number));
         return true;
     };
+    Account.prototype.get_account_currency = function () {
+        return this.currency;
+    };
     return Account;
 }());
 exports.Account = Account;

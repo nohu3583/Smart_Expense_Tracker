@@ -53,13 +53,14 @@ export class Database {
         return this.expenses;
     }
     
-    get_currency_from_account(account_number: string): string | undefined {
+    get_currency_from_account(account_number: string): string {
       const account_correct = this.accounts.find(acc => acc.account_number === account_number);
-      return account_correct ? account_correct.get_account_currency() : undefined;
+      return account_correct ? account_correct.get_account_currency() : "";
     }
 
-    get_active_account() : string | undefined {
-      const user_accounts = this.users.find();
+    get_active_account(): string {
+      const active_account = this.users.find(user => user.logged_in === true);
+      return active_account ? active_account.get_account_number() : "";
     }
   }
 
