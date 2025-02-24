@@ -69,7 +69,7 @@ async function addExpense(expense:number) {
   const amount_input: string = await askQuestion("How much was it? ");
   const amount: number = parseFloat(amount_input);
   const date_input: string = await askQuestion("When was the purchase made?(format: ÅÅÅÅ-MM-DD) ");
-  const date: Date = Date.parse(date_input);
+  const date: Date = new Date(Date.parse(date_input));
 
   
 }
