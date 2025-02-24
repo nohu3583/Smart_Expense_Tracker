@@ -88,11 +88,11 @@ function loginUser() {
                     password = _a.sent();
                     user = db.findUser(username);
                     if (user && user.authenticate(password)) {
-                        console.log("\u2705 Login successful! Welcome, ".concat(username));
+                        console.log("Login successful! Welcome, ".concat(username));
                         return [2 /*return*/, user];
                     }
                     else {
-                        console.log("❌ Invalid username or password.");
+                        console.log(" Invalid username or password.");
                         return [2 /*return*/, null];
                     }
                     return [2 /*return*/];
@@ -138,7 +138,7 @@ function main() {
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
-                    console.log("\n💰 Smart Expense Tracker");
+                    console.log("\n Smart Expense Tracker");
                     console.log("1. Register");
                     console.log("2. Login");
                     console.log("3. Exit");
@@ -166,11 +166,11 @@ function main() {
                     _b.label = 7;
                 case 7: return [3 /*break*/, 10];
                 case 8:
-                    console.log("👋 Goodbye!");
+                    console.log("Goodbye!");
                     rl.close();
                     return [2 /*return*/];
                 case 9:
-                    console.log("❌ Invalid option. Try again.");
+                    console.log("Invalid option. Try again.");
                     _b.label = 10;
                 case 10:
                     main();

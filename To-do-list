@@ -15,7 +15,7 @@ If we have more time than estimated remaining we will add multi user support.
 Who does what:
 * Defining our project scope - Everyone
 * Set up initial project structure - Everone
-* Data base setup- Noah
+* Data base setup and login- Noah - Done
 * Expense categories and user login & logging - Oskar/Iliya 
 * Data visualization (2 day) - Oskar/Iliya
 * Alert and notification system (2 day) - Oskar/Iliya

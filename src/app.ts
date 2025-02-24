@@ -36,10 +36,10 @@ async function loginUser(): Promise<User | null> {
 
   const user = db.findUser(username);
   if (user && user.authenticate(password)) {
-    console.log(`✅ Login successful! Welcome, ${username}`);
+    console.log(`Login successful! Welcome, ${username}`);
     return user;
   } else {
-    console.log("❌ Invalid username or password.");
+    console.log(" Invalid username or password.");
     return null;
   }
 }
