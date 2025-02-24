@@ -72,11 +72,15 @@ async function addExpense(expense:number) {
   const amount: number = parseFloat(amount_input);
   const currency: string = await askQuestion("In what currency? ");
   const date_input: string = await askQuestion("When was the purchase made?(format: ÅÅÅÅ-MM-DD) ");
+<<<<<<< HEAD
   const date: Date = Date.parse(date_input);
   const account_currency = db.get_currency_from_account();
   if (currency !== ) {
 
   }
+=======
+  const date: Date = new Date(Date.parse(date_input));
+>>>>>>> 8f54a97aabd77d6498fa60de40ed61622108209a
 
   
 }
