@@ -17,7 +17,7 @@ function askQuestion(query: string): Promise<string> {
 async function registerUser() {
   console.log("Register New User");
   const username = await askQuestion("Enter username: ");
-  const password = await askQuestion("Enter password: ");
+  const password = await askQuestion("Enter password: "); // check for hidden input, so that password is not shown when registering
   
   if (db.findUser(username)) {
     console.log(" Username already exists!");

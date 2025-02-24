@@ -1,6 +1,6 @@
 export class Currency {
     currencycode: string;
-    exchangerate: number; // Relative to base currency
+    exchangerate: number; // Relative to base currency 
   
     constructor(currencyCode: string, currencyname : string, exchangeRate: number) {
       this.currencycode = currencyCode;
