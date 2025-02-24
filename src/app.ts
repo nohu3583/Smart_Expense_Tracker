@@ -61,8 +61,18 @@ async function createAccount(user: User) {
     db.addAccount(account);
   
     console.log(`Account created for ${user.username} with ${balance} ${currency} at ${bankName}`);
-  }
+}
+
+async function addExpense(expense:number) {
+  console.log("")
+  const description: string = await askQuestion("Describe your purchase: ");
+  const amount_input: string = await askQuestion("How much was it? ");
+  const amount: number = parseFloat(amount_input);
+  const date_input: string = await askQuestion("When was the purchase made?(format: ÅÅÅÅ-MM-DD) ");
+  const date: Date = Date.parse(date_input);
+
   
+}
 
 
 async function main() {

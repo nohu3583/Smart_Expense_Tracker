@@ -1,5 +1,4 @@
 export class Expense {
-    id: number;
     description: string;
     amount: number;
     date: Date;
@@ -7,8 +6,7 @@ export class Expense {
     currency : string;
 
   
-    constructor(id: number, description: string, amount: number, category: string, currency: string) {
-      this.id = id;
+    constructor(description: string, amount: number, category: string, currency: string) {
       this.description = description;
       this.amount = amount;
       this.date = new Date();
