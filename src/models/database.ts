@@ -1,6 +1,6 @@
 import { User } from "./user";
 import {Account} from "./account";
-import { Expense } from "./expense";
+import {Expense} from "./expense";
 
 export class Database {
     private static instance: Database;
@@ -52,7 +52,16 @@ export class Database {
     getExpenses(): Expense[] {
         return this.expenses;
     }
+    
+    get_currency_from_account(account_number: string): string | undefined {
+      const account_correct = this.accounts.find(acc => acc.account_number === account_number);
+      return account_correct ? account_correct.get_account_currency() : undefined;
+    }
 
+    get_active_account() : string | undefined {
+      const user_accounts = this.users.find();
+    }
   }
+
   
   

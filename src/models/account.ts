@@ -9,6 +9,7 @@ export class Account {
         this.balance = balance;
         this.currency = currency;
         this.bank_name = bank_name;
+
     }
 
     deposit(amount: number) {
@@ -25,5 +26,8 @@ export class Account {
         console.log(`Withdrawn ${amount} from ${this.account_number}`);
         return true
     }
+    get_account_currency(): string {
+        return this.currency;
+      }
 
 }

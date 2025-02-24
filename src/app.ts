@@ -24,7 +24,7 @@ async function registerUser() {
     return;
   }
 
-  const user = new User(username, password);
+  const user = new User(username, password, "", false);
   db.addUser(user);
   console.log(`User ${username} registered successfully!`);
 }
@@ -36,6 +36,7 @@ async function loginUser(): Promise<User | null> {
 
   const user = db.findUser(username);
   if (user && user.authenticate(password)) {
+    user.change_account_status(user.logged_in);
     console.log(`Login successful! Welcome, ${username}`);
     return user;
   } else {
@@ -59,17 +60,23 @@ async function createAccount(user: User) {
   
     const account = new Account(accountNumber, balance, currency, bankName); 
     db.addAccount(account);
-  
+    user.input_account_number(accountNumber);
     console.log(`Account created for ${user.username} with ${balance} ${currency} at ${bankName}`);
 }
 
 async function addExpense(expense:number) {
+  const account_id = 
   console.log("")
   const description: string = await askQuestion("Describe your purchase: ");
   const amount_input: string = await askQuestion("How much was it? ");
   const amount: number = parseFloat(amount_input);
+  const currency: string = await askQuestion("In what currency? ");
   const date_input: string = await askQuestion("When was the purchase made?(format: ÅÅÅÅ-MM-DD) ");
   const date: Date = Date.parse(date_input);
+  const account_currency = db.get_currency_from_account();
+  if (currency !== ) {
+
+  }
 
   
 }
