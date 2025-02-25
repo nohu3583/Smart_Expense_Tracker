@@ -177,7 +177,6 @@ function addExpense() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log(db.get_active_account());
                     if (!!db.get_active_account()) return [3 /*break*/, 1];
                     console.log("No user logged in. Please login first.");
                     return [2 /*return*/];
@@ -201,29 +200,33 @@ function addExpense() {
                     return [4 /*yield*/, askQuestion("What category does this fall under? \n" + functions_1.expense_categories + ":  ")];
                 case 6:
                     category = _a.sent();
-                    if (0 > parseFloat(category) && parseFloat(category) > 7) {
-                        console.log("Invalid category. Please enter a number between 1-7.");
-                        return [2 /*return*/];
-                    }
+                    _a.label = 7;
+                case 7:
+                    if (!(1 > parseFloat(category) || parseFloat(category) > 7)) return [3 /*break*/, 9];
+                    return [4 /*yield*/, askQuestion("Invalid category. Please enter a number between 1-7.")];
+                case 8:
+                    category = _a.sent();
+                    return [3 /*break*/, 7];
+                case 9:
                     if (isNaN(amount)) {
                         console.log("Invalid amount. Please enter a number.");
                         return [2 /*return*/];
                     }
-                    if (!(currency !== db.get_currency_from_account(account_id))) return [3 /*break*/, 8];
+                    if (!(currency !== db.get_currency_from_account(account_id))) return [3 /*break*/, 11];
                     return [4 /*yield*/, fetch("https://api.exchangeratesapi.io/latest?base=".concat(currency))];
-                case 7:
+                case 10:
                     currency_api_data = _a.sent();
                     exchangeRate = 1;
                     amount = amount * exchangeRate;
                     currency = db.get_currency_from_account(account_id);
-                    _a.label = 8;
-                case 8:
+                    _a.label = 11;
+                case 11:
                     expense = new expense_1.Expense(description, amount, date, category, currency, account_id);
                     db.addExpense(expense);
                     console.log("Expense added for ".concat(amount, " ").concat(currency, " on ").concat(date, " in ").concat(category));
                     db.account_withdraw_after_expense(account_id, amount);
                     return [4 /*yield*/, askQuestion("Do you want to add another expense? (yes/no) ")];
-                case 9:
+                case 12:
                     answer = _a.sent();
                     if (answer.toLowerCase() === "yes") {
                         addExpense();
@@ -231,8 +234,8 @@ function addExpense() {
                     else {
                         main();
                     }
-                    _a.label = 10;
-                case 10: return [2 /*return*/];
+                    _a.label = 13;
+                case 13: return [2 /*return*/];
             }
         });
     });
@@ -275,7 +278,7 @@ function main() {
                     rl.close();
                     return [2 /*return*/];
                 case 5:
-                    user = new user_1.User("1", "2", "20020", true);
+                    user = new user_1.User("Test", "testa", "20020", true);
                     db.addUser(user);
                     account = new account_1.Account("20020", 10000, "SEK", "Skandia");
                     db.addAccount(account);
