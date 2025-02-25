@@ -25,7 +25,7 @@ export class Account {
         console.log(`Insufficient balance in ${this.account_number}`);
         return;
         }
-        console.log(this.balance);
+        console.log(`Balance left in ${this.account_number} is ${this.balance}`);
     }
 
     get_account_currency(): string {

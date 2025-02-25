@@ -151,13 +151,17 @@ function createAccount(user) {
                 case 3:
                     balanceInput = _a.sent();
                     balance = parseFloat(balanceInput);
-                    return [4 /*yield*/, askQuestion("Enter bank name: ")];
+                    _a.label = 4;
                 case 4:
+                    if (!isNaN(balance)) return [3 /*break*/, 6];
+                    console.log("Invalid balance amount. Please enter a number.");
+                    return [4 /*yield*/, askQuestion("Enter initial balance: ")];
+                case 5:
+                    balanceInput = _a.sent();
+                    return [3 /*break*/, 4];
+                case 6: return [4 /*yield*/, askQuestion("Enter bank name: ")];
+                case 7:
                     bankName = _a.sent();
-                    if (isNaN(balance)) {
-                        console.log("Invalid balance amount. Please enter a number.");
-                        return [2 /*return*/];
-                    }
                     account = new account_1.Account(accountNumber, balance, currency, bankName);
                     db.addAccount(account);
                     user.input_account_number(accountNumber);
@@ -173,6 +177,7 @@ function addExpense() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
+                    console.log(db.get_active_account());
                     if (!!db.get_active_account()) return [3 /*break*/, 1];
                     console.log("No user logged in. Please login first.");
                     return [2 /*return*/];
@@ -193,7 +198,7 @@ function addExpense() {
                 case 5:
                     date_input = _a.sent();
                     date = new Date(Date.parse(date_input));
-                    return [4 /*yield*/, askQuestion("What category does this fall under? \n" + functions_1.expense_categories)];
+                    return [4 /*yield*/, askQuestion("What category does this fall under? \n" + functions_1.expense_categories + ":  ")];
                 case 6:
                     category = _a.sent();
                     if (0 > parseFloat(category) && parseFloat(category) > 7) {
@@ -241,15 +246,16 @@ function wait(ms) {
 }
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var choice, _a, choice, _b, user, usernames;
+        var choice, _a, user, account, choice, _b, user, usernames;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    if (!true) return [3 /*break*/, 22];
-                    if (!(db.get_users().length === 0)) return [3 /*break*/, 7];
+                    if (!true) return [3 /*break*/, 23];
+                    if (!(db.get_users().length === 0)) return [3 /*break*/, 8];
                     console.log("\n Smart Expense Tracker");
                     console.log("1. Register");
                     console.log("2. Exit");
+                    console.log("3. For testing only");
                     return [4 /*yield*/, askQuestion("Choose an option: ")];
                 case 1:
                     choice = _c.sent();
@@ -257,21 +263,28 @@ function main() {
                     switch (_a) {
                         case "1": return [3 /*break*/, 2];
                         case "2": return [3 /*break*/, 4];
+                        case "3": return [3 /*break*/, 5];
                     }
-                    return [3 /*break*/, 5];
+                    return [3 /*break*/, 6];
                 case 2: return [4 /*yield*/, registerUser()];
                 case 3:
                     _c.sent();
-                    return [3 /*break*/, 6];
+                    return [3 /*break*/, 7];
                 case 4:
                     console.log("Goodbye!");
                     rl.close();
                     return [2 /*return*/];
                 case 5:
+                    user = new user_1.User("1", "2", "20020", true);
+                    db.addUser(user);
+                    account = new account_1.Account("20020", 10000, "SEK", "Skandia");
+                    db.addAccount(account);
+                    return [3 /*break*/, 7];
+                case 6:
                     console.log("Invalid option. Try again.");
-                    _c.label = 6;
-                case 6: return [3 /*break*/, 20];
-                case 7:
+                    _c.label = 7;
+                case 7: return [3 /*break*/, 21];
+                case 8:
                     console.log("\n Smart Expense Tracker");
                     console.log("1. Register");
                     console.log("2. Login");
@@ -280,52 +293,52 @@ function main() {
                     console.log("5. Logout");
                     console.log("6. Exit");
                     return [4 /*yield*/, askQuestion("Choose an option: ")];
-                case 8:
+                case 9:
                     choice = _c.sent();
                     _b = choice;
                     switch (_b) {
-                        case "1": return [3 /*break*/, 9];
-                        case "2": return [3 /*break*/, 11];
-                        case "3": return [3 /*break*/, 13];
-                        case "4": return [3 /*break*/, 14];
-                        case "5": return [3 /*break*/, 16];
-                        case "6": return [3 /*break*/, 18];
+                        case "1": return [3 /*break*/, 10];
+                        case "2": return [3 /*break*/, 12];
+                        case "3": return [3 /*break*/, 14];
+                        case "4": return [3 /*break*/, 15];
+                        case "5": return [3 /*break*/, 17];
+                        case "6": return [3 /*break*/, 19];
                     }
-                    return [3 /*break*/, 19];
-                case 9: return [4 /*yield*/, registerUser()];
-                case 10:
+                    return [3 /*break*/, 20];
+                case 10: return [4 /*yield*/, registerUser()];
+                case 11:
                     _c.sent();
-                    return [3 /*break*/, 20];
-                case 11: return [4 /*yield*/, loginUser()];
-                case 12:
-                    user = _c.sent();
-                    return [3 /*break*/, 20];
+                    return [3 /*break*/, 21];
+                case 12: return [4 /*yield*/, loginUser()];
                 case 13:
+                    user = _c.sent();
+                    return [3 /*break*/, 21];
+                case 14:
                     usernames = db.display_user_names();
                     console.log("Created user are: ".concat(usernames));
-                    return [3 /*break*/, 20];
-                case 14: return [4 /*yield*/, addExpense()];
-                case 15:
+                    return [3 /*break*/, 21];
+                case 15: return [4 /*yield*/, addExpense()];
+                case 16:
                     _c.sent();
-                    return [3 /*break*/, 20];
-                case 16: return [4 /*yield*/, logoutUser()];
-                case 17:
+                    return [3 /*break*/, 21];
+                case 17: return [4 /*yield*/, logoutUser()];
+                case 18:
                     _c.sent();
                     rl.close();
-                    _c.label = 18;
-                case 18:
+                    _c.label = 19;
+                case 19:
                     console.log("Goodbye!");
                     rl.close();
                     return [2 /*return*/];
-                case 19:
+                case 20:
                     console.log("Invalid option. Try again.");
-                    _c.label = 20;
-                case 20: return [4 /*yield*/, wait(2000)];
-                case 21:
+                    _c.label = 21;
+                case 21: return [4 /*yield*/, wait(2000)];
+                case 22:
                     _c.sent();
                     console.clear();
                     return [3 /*break*/, 0];
-                case 22: return [2 /*return*/];
+                case 23: return [2 /*return*/];
             }
         });
     });

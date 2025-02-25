@@ -19,7 +19,7 @@ var Account = /** @class */ (function () {
             console.log("Insufficient balance in ".concat(this.account_number));
             return;
         }
-        console.log(this.balance);
+        console.log("Balance left in ".concat(this.account_number, " is ").concat(this.balance));
     };
     Account.prototype.get_account_currency = function () {
         return this.currency;

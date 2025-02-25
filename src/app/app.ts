@@ -7,6 +7,7 @@ import { get } from 'http';
 import { clear } from 'console';
 import { stat } from 'fs';
 import { expense_categories } from './functions';
+import { UpdateQueryBuilder } from 'typeorm';
 
 
 
@@ -87,15 +88,17 @@ async function createAccount(user: User) {
     console.log(" Create Bank Account");
     const accountNumber: string = await askQuestion("Enter account number: ");
     const currency: string = await askQuestion("Enter currency (e.g., USD, EUR): ");
-    const balanceInput: string = await askQuestion("Enter initial balance: ");
+    let balanceInput: string = await askQuestion("Enter initial balance: ");
     const balance: number = parseFloat(balanceInput);
-    const bankName: string = await askQuestion("Enter bank name: "); 
-  
-    if (isNaN(balance)) {
+
+    while (isNaN(balance)) {
       console.log("Invalid balance amount. Please enter a number.");
-      return;
+       balanceInput = await askQuestion("Enter initial balance: ");
     }
   
+    const bankName: string = await askQuestion("Enter bank name: "); 
+  
+
     const account = new Account(accountNumber, balance, currency, bankName); 
     db.addAccount(account);
     user.input_account_number(accountNumber);
@@ -116,7 +119,7 @@ async function addExpense() {
   let currency: string = await askQuestion("In what currency? ");
   const date_input: string = await askQuestion("When was the purchase made?(format: ÅÅÅÅ-MM-DD) ");
   const date: Date = new Date(Date.parse(date_input));
-  const category: string = await askQuestion("What category does this fall under? \n" + expense_categories);
+  const category: string = await askQuestion("What category does this fall under? \n" + expense_categories + ":  ");
   
   if (0 > parseFloat(category) && parseFloat(category) > 7) {
     console.log("Invalid category. Please enter a number between 1-7.");
@@ -158,6 +161,7 @@ async function main() {
       console.log("\n Smart Expense Tracker");
       console.log("1. Register");
       console.log("2. Exit");
+      console.log("3. For testing only")
       const choice = await askQuestion("Choose an option: ");
       switch (choice) {
         case "1":
@@ -167,6 +171,12 @@ async function main() {
           console.log("Goodbye!");
           rl.close();
           return;
+        case "3":
+          const user = new User("Test", "testa", "20020", true)
+          db.addUser(user)
+          const account = new Account("20020", 10000, "SEK", "Skandia")
+          db.addAccount(account);
+          break;
         default:
           console.log("Invalid option. Try again.");
       }
