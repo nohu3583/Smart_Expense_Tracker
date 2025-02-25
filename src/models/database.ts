@@ -1,6 +1,7 @@
 import { User } from "./user";
 import {Account} from "./account";
 import {Expense} from "./expense";
+import { blob } from "stream/consumers";
 
 export class Database {
     private static instance: Database;
@@ -21,9 +22,14 @@ export class Database {
     addUser(user: User): void {
       this.users.push(user);
     }
+    
   
     findUser(username: string): User | undefined {
       return this.users.find(user => user.username === username);
+    }
+
+    get_users() : User[] {
+      return this.users;
     }
   
     addAccount(account: Account): void {
@@ -62,6 +68,21 @@ export class Database {
       const active_account = this.users.find(user => user.logged_in === true);
       return active_account ? active_account.get_account_number() : "";
     }
+
+    account_withdraw_after_expense(account_number : string , expense : number ) {
+      const account_correct = this.accounts.find(acc => acc.account_number === account_number);
+      account_correct?.withdraw(expense, account_correct.get_account_number());
+    }
+
+    display_user_names(): string[] {
+      return this.users.map(user => user.username);
+    }
+
+    find_account_status(username : string) : boolean | string {
+      const account = this.findUser(username);
+      return account ? account.logged_in : "";
+    }
+
   }
 
   

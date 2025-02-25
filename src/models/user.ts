@@ -23,6 +23,9 @@ export class User {
       return this.account_id;
     }
     
+    get_account_status() : boolean {
+      return this.logged_in;
+    }
     change_account_status(status : boolean)  {
       if (status === true) {
         this.logged_in = false;

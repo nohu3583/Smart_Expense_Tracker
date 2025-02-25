@@ -12,22 +12,27 @@ export class Account {
 
     }
 
+    
     deposit(amount: number) {
         this.balance += amount;
-        console.log(`Deposited ${amount} to ${this.account_number}`);
     }
 
-    withdraw(amount: number) {
-        if (this.balance < amount) {
-            console.log(`Insufficient balance in ${this.account_number}`);
-            return false;
+    withdraw(amount: number, account : string) {
+        if (this.balance > amount) {
+            this.balance -= amount;
         }
-        this.balance -= amount;
-        console.log(`Withdrawn ${amount} from ${this.account_number}`);
-        return true
+        if(this.balance < amount){
+        console.log(`Insufficient balance in ${this.account_number}`);
+        return;
+        }
+        console.log(this.balance);
     }
+
     get_account_currency(): string {
         return this.currency;
       }
 
+    get_account_number() : string {
+        return this.account_number;
+    }
 }
