@@ -68,10 +68,12 @@ function registerUser() {
                     }
                     status = false;
                     console.log("User ".concat(username, " registered successfully!"));
-                    // if (db.get_active_account() === "") {
-                    console.log("User ".concat(username, " is now logged in!"));
                     user = new user_1.User(username, password, "", status);
                     db.addUser(user);
+                    user.change_account_status(user.logged_in);
+                    return [4 /*yield*/, createAccount(user)];
+                case 3:
+                    _a.sent();
                     return [2 /*return*/];
             }
         });
@@ -79,7 +81,7 @@ function registerUser() {
 }
 function loginUser() {
     return __awaiter(this, void 0, void 0, function () {
-        var username, password, user;
+        var username, password, user, status;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -91,14 +93,21 @@ function loginUser() {
                 case 2:
                     password = _a.sent();
                     user = db.findUser(username);
-                    if (user && user.authenticate(password)) {
-                        user.change_account_status(user.logged_in);
-                        console.log("Login successful! Welcome, ".concat(username));
-                        return [2 /*return*/, user];
+                    status = db.find_account_status(username);
+                    if (status) {
+                        console.log("User is alredy logged in");
+                        return [2 /*return*/, null];
                     }
                     else {
-                        console.log(" Invalid username or password.");
-                        return [2 /*return*/, null];
+                        if (user && user.authenticate(password)) {
+                            user.change_account_status(user.logged_in);
+                            console.log("Login successful! Welcome, ".concat(username));
+                            return [2 /*return*/, user];
+                        }
+                        else {
+                            console.log(" Invalid username or password.");
+                            return [2 /*return*/, null];
+                        }
                     }
                     return [2 /*return*/];
             }
@@ -117,6 +126,8 @@ function logoutUser() {
                 rl.close();
             }
             else {
+                console.log(user);
+                console.log(user_id);
                 console.log("No user logged in");
                 return [2 /*return*/];
             }
@@ -231,7 +242,7 @@ function main() {
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    if (!true) return [3 /*break*/, 24];
+                    if (!true) return [3 /*break*/, 22];
                     if (!(db.get_users().length === 0)) return [3 /*break*/, 7];
                     console.log("\n Smart Expense Tracker");
                     console.log("1. Register");
@@ -256,7 +267,7 @@ function main() {
                 case 5:
                     console.log("Invalid option. Try again.");
                     _c.label = 6;
-                case 6: return [3 /*break*/, 22];
+                case 6: return [3 /*break*/, 20];
                 case 7:
                     console.log("\n Smart Expense Tracker");
                     console.log("1. Register");
@@ -272,50 +283,45 @@ function main() {
                     switch (_b) {
                         case "1": return [3 /*break*/, 9];
                         case "2": return [3 /*break*/, 11];
-                        case "3": return [3 /*break*/, 15];
-                        case "4": return [3 /*break*/, 16];
-                        case "5": return [3 /*break*/, 18];
-                        case "6": return [3 /*break*/, 20];
+                        case "3": return [3 /*break*/, 13];
+                        case "4": return [3 /*break*/, 14];
+                        case "5": return [3 /*break*/, 16];
+                        case "6": return [3 /*break*/, 18];
                     }
-                    return [3 /*break*/, 21];
+                    return [3 /*break*/, 19];
                 case 9: return [4 /*yield*/, registerUser()];
                 case 10:
                     _c.sent();
-                    return [3 /*break*/, 22];
+                    return [3 /*break*/, 20];
                 case 11: return [4 /*yield*/, loginUser()];
                 case 12:
                     user = _c.sent();
-                    if (!user) return [3 /*break*/, 14];
-                    return [4 /*yield*/, createAccount(user)];
+                    return [3 /*break*/, 20];
                 case 13:
-                    _c.sent();
-                    _c.label = 14;
-                case 14: return [3 /*break*/, 22];
-                case 15:
                     usernames = db.display_user_names();
                     console.log("Created user are: ".concat(usernames));
-                    return [3 /*break*/, 22];
-                case 16: return [4 /*yield*/, addExpense()];
+                    return [3 /*break*/, 20];
+                case 14: return [4 /*yield*/, addExpense()];
+                case 15:
+                    _c.sent();
+                    return [3 /*break*/, 20];
+                case 16: return [4 /*yield*/, logoutUser()];
                 case 17:
                     _c.sent();
-                    return [3 /*break*/, 22];
-                case 18: return [4 /*yield*/, logoutUser()];
-                case 19:
-                    _c.sent();
-                    return [3 /*break*/, 22];
-                case 20:
+                    return [3 /*break*/, 20];
+                case 18:
                     console.log("Goodbye!");
                     rl.close();
                     return [2 /*return*/];
-                case 21:
+                case 19:
                     console.log("Invalid option. Try again.");
-                    _c.label = 22;
-                case 22: return [4 /*yield*/, wait(2000)];
-                case 23:
+                    _c.label = 20;
+                case 20: return [4 /*yield*/, wait(20000)];
+                case 21:
                     _c.sent();
                     console.clear();
                     return [3 /*break*/, 0];
-                case 24: return [2 /*return*/];
+                case 22: return [2 /*return*/];
             }
         });
     });

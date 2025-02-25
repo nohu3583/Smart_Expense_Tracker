@@ -36,7 +36,10 @@ async function registerUser() {
   // }
   // else{}
   const user = new User(username, password, "", status);
+
   db.addUser(user);
+  user.change_account_status(user.logged_in);
+  await createAccount(user);
 }
 
 async function loginUser(): Promise<User | null> {
@@ -65,13 +68,15 @@ async function loginUser(): Promise<User | null> {
 
 async function logoutUser()  {
   const user_id = db.get_active_account();
-  const user = db.findUser(user_id);
-
+  const user = db.findUser(user_id); //funkar inte
+  
   if (user) {
     user.change_account_status(user.logged_in);
     console.log("Logout successful!");
     rl.close();
   } else {
+    console.log(user);
+    console.log(user_id);
     console.log("No user logged in");
     return;
   }
@@ -174,9 +179,6 @@ async function main() {
           break;
         case "2":
           const user = await loginUser();
-          if (user) {
-            await createAccount(user);
-          }
           break;
         case "3":
           const usernames = db.display_user_names();

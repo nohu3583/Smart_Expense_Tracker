@@ -17,6 +17,9 @@ var User = /** @class */ (function () {
     User.prototype.get_account_number = function () {
         return this.account_id;
     };
+    User.prototype.get_account_status = function () {
+        return this.logged_in;
+    };
     User.prototype.change_account_status = function (status) {
         if (status === true) {
             this.logged_in = false;

@@ -58,6 +58,10 @@ var Database = /** @class */ (function () {
     Database.prototype.display_user_names = function () {
         return this.users.map(function (user) { return user.username; });
     };
+    Database.prototype.find_account_status = function (username) {
+        var account = this.findUser(username);
+        return account ? account.logged_in : "";
+    };
     return Database;
 }());
 exports.Database = Database;
