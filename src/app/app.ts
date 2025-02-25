@@ -5,6 +5,7 @@ import {Account} from '../models/account';
 import {Expense} from '../models/expense';
 import { get } from 'http';
 import { clear } from 'console';
+import { stat } from 'fs';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -44,7 +45,13 @@ async function loginUser(): Promise<User | null> {
   const password = await askQuestion("Enter password: ");
 
   const user = db.findUser(username);
-  const status = 
+  const status = db.find_account_status(username);
+  
+  if (status) {
+    console.log("User is alredy logged in")
+    return null;
+  }
+  else{
   if (user && user.authenticate(password)) {
     user.change_account_status(user.logged_in);
     console.log(`Login successful! Welcome, ${username}`);
@@ -53,6 +60,7 @@ async function loginUser(): Promise<User | null> {
     console.log(" Invalid username or password.");
     return null;
   }
+}
 }
 
 async function logoutUser()  {
