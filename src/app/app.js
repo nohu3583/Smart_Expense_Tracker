@@ -228,14 +228,18 @@ function addExpense() {
                     return [4 /*yield*/, askQuestion("Do you want to add another expense? (yes/no) ")];
                 case 12:
                     answer = _a.sent();
-                    if (answer.toLowerCase() === "yes") {
-                        addExpense();
-                    }
-                    else {
-                        main();
-                    }
-                    _a.label = 13;
-                case 13: return [2 /*return*/];
+                    if (!(answer.toLowerCase() === "yes")) return [3 /*break*/, 15];
+                    return [4 /*yield*/, wait(200)];
+                case 13:
+                    _a.sent();
+                    return [4 /*yield*/, addExpense()];
+                case 14:
+                    _a.sent();
+                    return [3 /*break*/, 16];
+                case 15:
+                    main();
+                    _a.label = 16;
+                case 16: return [2 /*return*/];
             }
         });
     });

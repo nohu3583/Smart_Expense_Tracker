@@ -143,7 +143,9 @@ async function addExpense() {
 
   const answer = await askQuestion("Do you want to add another expense? (yes/no) ");
   if (answer.toLowerCase() === "yes") {
-    addExpense();
+    await wait(200);
+    console.clear();
+    await addExpense();
   }
   else {
     main();
