@@ -28,6 +28,11 @@ export class Database {
       return this.users.find(user => user.username === username);
     }
 
+    find_account_id(accountid: string): User | undefined {
+      return this.users.find(user => user.account_id === accountid);
+    }
+
+
     get_users() : User[] {
       return this.users;
     }

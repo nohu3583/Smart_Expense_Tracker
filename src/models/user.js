@@ -17,6 +17,9 @@ var User = /** @class */ (function () {
     User.prototype.get_account_number = function () {
         return this.account_id;
     };
+    User.prototype.get_account_username = function () {
+        return this.username;
+    };
     User.prototype.get_account_status = function () {
         return this.logged_in;
     };

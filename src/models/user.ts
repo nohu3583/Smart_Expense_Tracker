@@ -23,6 +23,10 @@ export class User {
       return this.account_id;
     }
     
+    get_account_username() : string {
+      return this.username;
+    }
+
     get_account_status() : boolean {
       return this.logged_in;
     }

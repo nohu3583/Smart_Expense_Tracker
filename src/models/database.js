@@ -19,6 +19,9 @@ var Database = /** @class */ (function () {
     Database.prototype.findUser = function (username) {
         return this.users.find(function (user) { return user.username === username; });
     };
+    Database.prototype.find_account_id = function (accountid) {
+        return this.users.find(function (user) { return user.account_id === accountid; });
+    };
     Database.prototype.get_users = function () {
         return this.users;
     };

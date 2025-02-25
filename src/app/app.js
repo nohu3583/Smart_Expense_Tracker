@@ -41,6 +41,7 @@ var database_1 = require("../models/database");
 var user_1 = require("../models/user");
 var account_1 = require("../models/account");
 var expense_1 = require("../models/expense");
+var functions_1 = require("./functions");
 var rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -119,15 +120,13 @@ function logoutUser() {
         var user_id, user;
         return __generator(this, function (_a) {
             user_id = db.get_active_account();
-            user = db.findUser(user_id);
+            user = db.find_account_id(user_id);
             if (user) {
                 user.change_account_status(user.logged_in);
                 console.log("Logout successful!");
-                rl.close();
+                return [2 /*return*/];
             }
             else {
-                console.log(user);
-                console.log(user_id);
                 console.log("No user logged in");
                 return [2 /*return*/];
             }
@@ -194,9 +193,13 @@ function addExpense() {
                 case 5:
                     date_input = _a.sent();
                     date = new Date(Date.parse(date_input));
-                    return [4 /*yield*/, askQuestion("What category does this fall under? ")];
+                    return [4 /*yield*/, askQuestion("What category does this fall under? \n" + functions_1.expense_categories)];
                 case 6:
                     category = _a.sent();
+                    if (0 > parseFloat(category) && parseFloat(category) > 7) {
+                        console.log("Invalid category. Please enter a number between 1-7.");
+                        return [2 /*return*/];
+                    }
                     if (isNaN(amount)) {
                         console.log("Invalid amount. Please enter a number.");
                         return [2 /*return*/];
@@ -308,7 +311,8 @@ function main() {
                 case 16: return [4 /*yield*/, logoutUser()];
                 case 17:
                     _c.sent();
-                    return [3 /*break*/, 20];
+                    rl.close();
+                    _c.label = 18;
                 case 18:
                     console.log("Goodbye!");
                     rl.close();
@@ -316,7 +320,7 @@ function main() {
                 case 19:
                     console.log("Invalid option. Try again.");
                     _c.label = 20;
-                case 20: return [4 /*yield*/, wait(20000)];
+                case 20: return [4 /*yield*/, wait(2000)];
                 case 21:
                     _c.sent();
                     console.clear();
