@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.client = void 0;
 exports.connectDB = connectDB;
 var mongodb_1 = require("mongodb");
-var MONGO_URI = "mongodb+srv://noahhzr:QfgvtOQflRNLZx3F@cluster0.xyz.mongodb.net/expenseTracker?retryWrites=true&w=majority";
+var MONGO_URI = "mongodb+srv://noahhzr:QfgvtOQflRNLZx3F@noahh.vo7o6.mongodb.net/";
 var client = new mongodb_1.MongoClient(MONGO_URI);
 exports.client = client;
 function connectDB() {

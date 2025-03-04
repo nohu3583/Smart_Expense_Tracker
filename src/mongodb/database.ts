@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 
-const MONGO_URI = "mongodb+srv://noahhzr:QfgvtOQflRNLZx3F@cluster0.xyz.mongodb.net/expenseTracker?retryWrites=true&w=majority";
+const MONGO_URI = "mongodb+srv://noahhzr:QfgvtOQflRNLZx3F@noahh.vo7o6.mongodb.net/";
 
 const client = new MongoClient(MONGO_URI);
 
@@ -15,3 +15,4 @@ async function connectDB() {
 }
 
 export { connectDB, client };
+
