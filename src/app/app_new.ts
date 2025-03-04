@@ -1,8 +1,9 @@
 import * as readline from 'readline';
-import { createAccount as createMongoAccount, getAccount, updateBalance, getAccountBalance, getAccountCurrency } from '../mongodb/account';
-import { addExpense as addMongoExpense, getExpenses } from '../mongodb/expense';
+import { createAccount as createMongoAccount, getAccount, updateBalance, getAccountBalance, getAccountCurrency, Account} from '../mongodb/account';
+import { addExpense as addMongoExpense, getExpenses, Expense } from '../mongodb/expense';
 import { connectDB } from '../mongodb/database';
 import {expense_categories} from  '../app/functions';
+
 
 const rl = readline.createInterface({
   input: process.stdin,

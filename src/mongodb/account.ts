@@ -2,7 +2,7 @@ import { connectDB } from "./database";
 
 const COLLECTION_NAME = "Account";
 
-interface Account {
+export interface Account {
   accountOwner: string;
   balance: number;
   currency: string;
@@ -62,15 +62,15 @@ async function getAccountBalance(username: string): Promise<number | null> {
 }
 
 // Get account currency by username
-async function getAccountCurrency(username: string): Promise<string | null> {
+async function getAccountCurrency(username: string): Promise<string> {
   const db = await connectDB();
-  if (!db) return null;
+  if (!db) return "";
 
   const account = await db.collection(COLLECTION_NAME).findOne(
     { username },
     { projection: { currency: 1, _id: 0 } }
   );
-  return account ? account.currency : null;
+  return account ? account.currency : "";
 }
 
 export { createAccount, getAccount, updateBalance, deleteAccount, getAccountBalance, getAccountCurrency };

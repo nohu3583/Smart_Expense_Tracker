@@ -2,7 +2,7 @@ import { connectDB } from "./database";
 
 const COLLECTION_NAME = "Expense";
 
-interface Expense {
+export interface Expense {
   amount: number;
   category: string;
   date: Date;
