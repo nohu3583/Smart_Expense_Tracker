@@ -34,11 +34,6 @@ async function registerUser() {
   let status = false;
   
   console.log(`User ${username} registered successfully!`);
-  // if (db.get_active_account() === "") {
-  // console.log(`User ${username} is now logged in!`);
-  // status = true;
-  // }
-  // else{}
   const user = new User(username, password, "", status);
 
   db.addUser(user);
