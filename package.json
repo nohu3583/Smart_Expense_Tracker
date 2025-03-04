@@ -1,0 +1,18 @@
+{
+  "name": "smart_expense_tracker",
+  "version": "1.0.0",
+  "description": "Git repo for PKD project, creating a Smart Expense Tracker using typescript mainly",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^6.14.1"
+  }
+}
