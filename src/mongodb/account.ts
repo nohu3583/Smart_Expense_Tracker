@@ -24,8 +24,7 @@ async function createAccount(account: Account) {
 async function getAccount(username: string) {
   const db = await connectDB();
   if (!db) return;
-  
-  return db.collection(COLLECTION_NAME).findOne({ username });
+  return db.collection(COLLECTION_NAME).findOne({username});
 }
 
 // Update account balance
@@ -73,4 +72,37 @@ async function getAccountCurrency(username: string): Promise<string> {
   return account ? account.currency : "";
 }
 
-export { createAccount, getAccount, updateBalance, deleteAccount, getAccountBalance, getAccountCurrency };
+async function amount_of_accounts() : Promise<number> {
+  const db = await connectDB();
+  if (!db) return 0;
+  
+  const accounts = await db.collection(COLLECTION_NAME).find().toArray();
+  return accounts.length;
+}
+
+async function find_active_account() : Promise<string> {
+  const db = await connectDB();
+  if (!db) return "";
+  
+  const account = await db.collection(COLLECTION_NAME).findOne(
+    { loggedIn: true },
+    { projection: { username: 1, _id: 0 } }
+  );
+  return account ? account.username : "";
+}
+
+
+async function getAllUsernames(): Promise<string[]> {
+  const db = await connectDB();
+  if (!db) return [];
+
+  const accounts = await db.collection(COLLECTION_NAME)
+    .find({}, { projection: { username: 1, _id: 0 } }) // Only fetch `username`
+    .toArray();
+
+  return accounts.map(account => account.username);
+}
+
+
+
+export { createAccount, getAccount, updateBalance, deleteAccount, getAccountBalance, getAccountCurrency, amount_of_accounts, find_active_account, getAllUsernames};
