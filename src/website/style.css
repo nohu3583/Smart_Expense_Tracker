@@ -1,0 +1,113 @@
+:root {
+    --clr-pri: #d5ac4e;
+    --clr-sec: #8b6220;
+    --clr-bg: #eecf6d;
+    --clr-tit-pri: #45050c;
+    --clr-tit-sec: #720e07;
+}
+
+
+body {
+    background-color: var(--clr-bg);
+    margin: 0;
+}
+
+.wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+
+    min-height: 100dvh;
+
+   .dropdown {
+        display: none;
+        position: absolute;
+        background-color: var(--clr-sec);
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        border-radius: 5px;
+    }
+
+    .dropdown a {
+        color: white;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+    }
+
+    .dropd:hover .dropdown {
+        display: block;
+    }
+
+    .dropd {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .dropbtn {
+        background-color: var(--clr-sec);
+        color: white;
+        padding: var(--l);
+        font-size: var(--l);
+        border: none;
+    }
+}
+
+
+header {
+    position: fixed;
+    width: 100%;
+    border-radius: 2rem;
+    background-color: var(--clr-bg);
+
+
+    .logo {
+        margin: auto;
+        text-align: center;
+        font-optical-sizing: auto;
+        font-weight: 400;
+        font-style: normal;
+        font-size: 5rem;
+        padding: 1rem;
+        
+    }
+
+    .logo_link {
+        padding: 15px;
+        border-radius: 1rem;
+        background-color: var(--clr-sec);
+        text-decoration: none;
+        color: var(--clr-tit-pri);
+
+    }
+}
+
+.main {
+    text-align: center;
+    margin-top: 124px;
+    padding: 1rem;
+    background-color: var(--clr-bg);
+
+    .login{
+        text-align: center;
+        font-optical-sizing: auto;
+        font-weight: 200;
+        font-style: normal;
+        font-size: 2rem;
+        padding: 1rem;
+
+    }
+
+    .login_link{
+        padding: 15px;
+        border-radius: 1rem;
+        background-color: var(--clr-pri);
+        text-decoration: none;
+        color: var(--clr-tit-sec);
+    }
+}
+
+.meny {
+    
+}
