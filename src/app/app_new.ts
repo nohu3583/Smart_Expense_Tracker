@@ -3,6 +3,32 @@ import { createAccount as createMongoAccount, getAccount, updateBalance, getAcco
 import { addExpense as addMongoExpense, getExpenses, Expense } from '../mongodb/expense';
 import { connectDB } from '../mongodb/database';
 import {expense_categories} from  '../app/functions';
+const apiURL = 'http://localhost:3000/api/expense';
+
+const sendExpense = async () => {
+    const amountInput = document.getElementById('amount') as HTMLInputElement;
+    const amount = amountInput.value;
+
+    if (!amount) {
+        alert('Please enter an amount.');
+        return;
+    }
+
+    try {
+        const response = await fetch(apiURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount })
+        });
+
+        const data = await response.json();
+        alert(data.message);
+    } catch (error) {
+        console.error('Error sending expense:', error);
+    }
+};
+
+document.getElementById('submit')?.addEventListener('click', sendExpense);
 
 
 const rl = readline.createInterface({
