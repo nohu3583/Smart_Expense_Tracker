@@ -8,19 +8,39 @@ import csvParser from 'csv-parser';
 import { stringify } from "csv-stringify";
 
 
-
+// Defining the expense categories
 export const expense_categories = ["1. Food", " 2. Housing", " 3. Transportation", " 4. Health and wellness", " 5. Shopping", " 6. Entertainment", " 7. Other"]
 
+// Defining the readline interface
 export const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
+
+/**
+* Asks the user a question and returns the answer as a promise.
+* @example
+* // askquestion("Enter a number: ");
+* // returns Promise<string>
+* @param {string} query - question to ask the user
+* @precondition - no preconditions
+* @returns {Promise<string>} Returns a promise that resolves to the user's answer
+*/
 export function askQuestion(query: string): Promise<string> {
     return new Promise(resolve => rl.question(query, resolve));
   }
 
-export async function registerUser() {
+/**
+* Registers a new user by asking for a username and password.
+* If the username already exists, the function will return without creating a new account.
+* If the username does not exist, the function will ask for an account number, balance, and currency.
+* The function will then create a new account and return.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value, updates the database with the new account
+*/
+export async function registerUser() : Promise<void> {
     console.log("Register New User");
     const username = await askQuestion("Enter username: ");
     const password = await askQuestion("Enter password: ");
@@ -47,8 +67,17 @@ export async function registerUser() {
       await createMongoAccount(account);
     }
   }
-
-export async function loginUser() {
+/**
+* Function to log in a user by asking for a username and password.
+* If the user is already logged in, the function will return without logging in the user.
+* If the user does not exist, the function will return without logging in the user.
+* If the password is incorrect, the function will return without logging in the user.
+* If the user is successfully logged in, the function will update the database and return.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value, updates loggedIn status in the database.
+*/
+export async function loginUser() : Promise<void> {
   const username = await askQuestion("Enter username: ");
 
   const account = await getAccount(username);
@@ -74,7 +103,12 @@ export async function loginUser() {
   }
   await switch_logged_in_status(username);
 }
-
+/**
+* Function to log out a user.
+* If no user is logged in, the function will return without logging out the user.
+* If the user is successfully logged out, the function will update the database and sets loggedIn status to false.
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, no return.
+*/
 export async function logoutUser() {
   const active_account = await find_active_account();
   if (active_account === "") {
@@ -86,7 +120,17 @@ export async function logoutUser() {
   console.log("User logged out successfully!");
 }
 
-export async function addExpense() {
+/**
+* Adds a new expense to the database.
+* If no user is logged in, the function will return without adding the expense.
+* The user can choose to add an expense manually or import from a CSV file.
+* If manual, the function will ask for amount, date, category, and description.
+* The function will then add the expense to the database and update the account balance.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, no return.
+*/
+export async function addExpense() : Promise<void> {
   const question = await askQuestion("Do you want to add manually or import from CSV? (manual/csv): ");
   if (question === "csv") {
     const inputfile = await askQuestion("Enter the name of the CSV file: ");
@@ -123,16 +167,34 @@ export async function addExpense() {
   await addMongoExpense(expense);
   console.log("Expense added successfully!");
   
-  //change balance for active account
   const account = await getAccount(active_account);
-  if (account) { // check if account exists than update balance so that it is changed after each expense
+  if (account) { 
     account.balance -= parseInt(amount);
     await updateBalance(account.accountOwner, account.balance);
   }
 }
-export async function wait(ms: number) {
+/**
+* Function that creates a delay for a specified number of milliseconds.
+* @param {number} ms - number of milliseconds to wait
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+export async function wait(ms: number) : Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+
+/**
+* Function to change or delete an expense.
+* If no user is logged in, the function will return without changing or deleting the expense.
+* The user can choose to change or delete an expense.
+* If changing, the function will ask for the description and date of the expense to change, then ask for the new details.
+* The function will then update the expense in the database.
+* If deleting, the function will ask for the date and description of the expense to delete.
+* The function will then delete the expense from the database.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 
 export async function change_or_delete_expense() {
   console.log("Menu for changing or deleting expenses");
@@ -171,7 +233,16 @@ export async function change_or_delete_expense() {
       console.log("Invalid option. Try again.");
   }
 }
-
+/**
+* Function to get expenses for a user.
+* If no user is logged in, the function will return without getting the expenses.
+* The user can choose to get all expenses, expenses by category, date, amount, or description.
+* The function will then display the expenses based on the user's choice.
+* The user can also export the expenses to a CSV file.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 export async function getExpensesForUser() {
   console.log("Menu for choosing expenses");
   console.log("1. Get all expenses");
@@ -221,9 +292,16 @@ export async function getExpensesForUser() {
   }
 }
 
-
-
-export async function account_options() {
+/**
+* Function for account options.
+* If no user is logged in, the function will return without displaying the account options.
+* The user can choose to get account information, change account information, or delete the account.
+* The function will then display the account information, change the account information, or delete the account based on the user's choice.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+export async function account_options() : Promise<void> {
   console.log("Menu for account options");
   console.log("1. Get account information");
   console.log("2. Change account information");
@@ -320,12 +398,24 @@ export async function account_options() {
   }
 }
 
-
-export async function awaitUserInput() {
+/**
+* Simple function that uses askquestion to wait for an input to continue.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+export async function awaitUserInput() : Promise<void>{
   askQuestion("Press enter to continue: ");
 }
 
-export async function csvparser(inputfile: string) {
+/**
+* Function that takes a csv file as input, the file is expenses that we want to add to expense database.
+* If there are problems in the file nothing will happen. But if there are no problems the expense database and also the account balace will be updated.
+* @param {string} inputfile - The file path to the file that should be added
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+export async function csvparser(inputfile: string) : Promise<void> {
   const active_account = await find_active_account();
   if (active_account === "") {
       console.log("No user is logged in!");
@@ -383,8 +473,13 @@ export async function csvparser(inputfile: string) {
           });
   });
 }
-
-export async function exportExpenseCsvFile() {
+/**
+* Exports all the expenses for the active user to a csv file.
+* @param {string} inputfile - The file path to the file that should be added
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+export async function exportExpenseCsvFile() : Promise<void> {
   const active_account = await find_active_account();
   if (active_account === "") {
       console.log("No user is logged in!");
