@@ -109,7 +109,7 @@ function registerUser() {
 }
 function loginUser() {
     return __awaiter(this, void 0, void 0, function () {
-        var username, account, password, hashed_password, active_account, account_logged_in;
+        var username, account, password, hashed_password, active_account;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, askQuestion("Enter username: ")];
@@ -122,14 +122,14 @@ function loginUser() {
                         console.log("User already logged in!");
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, askQuestion("Enter password: ")];
-                case 3:
-                    password = _a.sent();
-                    hashed_password = crypto.createHash('sha256').update(password).digest("hex");
                     if (account === null) {
                         console.log("User does not exist!");
                         return [2 /*return*/];
                     }
+                    return [4 /*yield*/, askQuestion("Enter password: ")];
+                case 3:
+                    password = _a.sent();
+                    hashed_password = crypto.createHash('sha256').update(password).digest("hex");
                     if ((account === null || account === void 0 ? void 0 : account.password) !== hashed_password) {
                         console.log("Incorrect password!");
                         return [2 /*return*/];
@@ -139,13 +139,13 @@ function loginUser() {
                 case 4:
                     active_account = _a.sent();
                     if (!(active_account !== "")) return [3 /*break*/, 6];
-                    return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
+                    return [4 /*yield*/, (0, account_1.switch_logged_in_status)(active_account)];
                 case 5:
-                    account_logged_in = _a.sent();
-                    account_logged_in.loggedIn = false;
+                    _a.sent();
                     _a.label = 6;
-                case 6:
-                    account.loggedIn = true;
+                case 6: return [4 /*yield*/, (0, account_1.switch_logged_in_status)(username)];
+                case 7:
+                    _a.sent();
                     return [2 /*return*/];
             }
         });
@@ -166,7 +166,9 @@ function logoutUser() {
                     return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
                 case 2:
                     account = _a.sent();
-                    account.loggedIn = false;
+                    return [4 /*yield*/, (0, account_1.switch_logged_in_status)(active_account)];
+                case 3:
+                    _a.sent();
                     console.log("User logged out successfully!");
                     return [2 /*return*/];
             }
@@ -426,12 +428,12 @@ function account_options() {
                     switch (_a) {
                         case "1": return [3 /*break*/, 4];
                         case "2": return [3 /*break*/, 5];
-                        case "3": return [3 /*break*/, 22];
+                        case "3": return [3 /*break*/, 24];
                     }
-                    return [3 /*break*/, 27];
+                    return [3 /*break*/, 29];
                 case 4:
                     console.log(account);
-                    return [3 /*break*/, 28];
+                    return [3 /*break*/, 30];
                 case 5:
                     options = ["1. Account Number", "2. Balance", "3. Currency", "4. Username", "5. Password"];
                     return [4 /*yield*/, askQuestion("What in your account do you want to change? \n" + options.join("\n") + "\nEnter choice: ")];
@@ -449,37 +451,49 @@ function account_options() {
                     switch (_b) {
                         case "1": return [3 /*break*/, 8];
                         case "2": return [3 /*break*/, 10];
-                        case "3": return [3 /*break*/, 12];
-                        case "4": return [3 /*break*/, 14];
-                        case "5": return [3 /*break*/, 16];
+                        case "3": return [3 /*break*/, 13];
+                        case "4": return [3 /*break*/, 16];
+                        case "5": return [3 /*break*/, 18];
                     }
-                    return [3 /*break*/, 18];
+                    return [3 /*break*/, 20];
                 case 8: return [4 /*yield*/, askQuestion("Enter new account number: ")];
                 case 9:
                     value = _c.sent();
-                    return [3 /*break*/, 19];
-                case 10: return [4 /*yield*/, askQuestion("Enter new balance: ")];
+                    return [3 /*break*/, 21];
+                case 10:
+                    if (!isNaN(value)) return [3 /*break*/, 12];
+                    return [4 /*yield*/, askQuestion("Enter new balance: ")];
                 case 11:
                     value = _c.sent();
                     value = parseFloat(value);
-                    return [3 /*break*/, 19];
-                case 12: return [4 /*yield*/, askQuestion("Enter new currency: ")];
+                    if (isNaN(value)) {
+                        console.log("Balance must be a number. Try again.");
+                    }
+                    return [3 /*break*/, 10];
+                case 12: return [3 /*break*/, 21];
                 case 13:
-                    value = _c.sent();
-                    return [3 /*break*/, 19];
-                case 14: return [4 /*yield*/, askQuestion("Enter new username: ")];
-                case 15:
-                    value = _c.sent();
-                    return [3 /*break*/, 19];
-                case 16: return [4 /*yield*/, askQuestion("Enter new password: ")];
+                    if (!(value.length !== 3)) return [3 /*break*/, 15];
+                    return [4 /*yield*/, askQuestion("Enter new currency: ")];
+                case 14:
+                    value = (_c.sent()).toUpperCase();
+                    if (value.length !== 3) {
+                        console.log("Currency must be 3 characters long. Try again.");
+                    }
+                    return [3 /*break*/, 13];
+                case 15: return [3 /*break*/, 21];
+                case 16: return [4 /*yield*/, askQuestion("Enter new username: ")];
                 case 17:
                     value = _c.sent();
+                    return [3 /*break*/, 21];
+                case 18: return [4 /*yield*/, askQuestion("Enter new password: ")];
+                case 19:
+                    value = _c.sent();
                     value = crypto.createHash('sha256').update(value).digest("hex");
-                    return [3 /*break*/, 19];
-                case 18:
+                    return [3 /*break*/, 21];
+                case 20:
                     console.log("Invalid option. Try again.");
                     return [2 /*return*/];
-                case 19:
+                case 21:
                     fieldNames = {
                         "1": "accountOwner",
                         "2": "balance",
@@ -487,30 +501,30 @@ function account_options() {
                         "4": "username",
                         "5": "password",
                     };
-                    if (!fieldNames[change_to]) return [3 /*break*/, 21];
+                    if (!fieldNames[change_to]) return [3 /*break*/, 23];
                     return [4 /*yield*/, (0, account_1.updates_specific_field)(fieldNames[change_to], active_account, value)];
-                case 20:
+                case 22:
                     _c.sent();
                     console.log("Account updated successfully!");
-                    _c.label = 21;
-                case 21: return [3 /*break*/, 28];
-                case 22: return [4 /*yield*/, askQuestion("Are you sure you want to delete your account? (yes/no): ")];
-                case 23:
+                    _c.label = 23;
+                case 23: return [3 /*break*/, 30];
+                case 24: return [4 /*yield*/, askQuestion("Are you sure you want to delete your account? (yes/no): ")];
+                case 25:
                     confirm_1 = _c.sent();
-                    if (!(confirm_1.toLowerCase() === "yes")) return [3 /*break*/, 26];
+                    if (!(confirm_1.toLowerCase() === "yes")) return [3 /*break*/, 28];
                     return [4 /*yield*/, (0, account_1.deleteAccount)(active_account)];
-                case 24:
+                case 26:
                     _c.sent();
                     console.log("Account deleted successfully!");
                     return [4 /*yield*/, (0, expense_1.deleteallexpense)(active_account)];
-                case 25:
-                    _c.sent();
-                    _c.label = 26;
-                case 26: return [3 /*break*/, 28];
                 case 27:
-                    console.log("Invalid option. Try again.");
+                    _c.sent();
                     _c.label = 28;
-                case 28: return [2 /*return*/];
+                case 28: return [3 /*break*/, 30];
+                case 29:
+                    console.log("Invalid option. Try again.");
+                    _c.label = 30;
+                case 30: return [2 /*return*/];
             }
         });
     });

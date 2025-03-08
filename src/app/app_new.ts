@@ -1,4 +1,4 @@
-import { createAccount,Account, amount_of_accounts, find_active_account, getAllUsernames} from '../mongodb/account';
+import { createAccount,Account, amount_of_accounts, find_active_account, getAllUsernames, switch_logged_in_status} from '../mongodb/account';
 import {rl, askQuestion, registerUser, loginUser, logoutUser,addExpense, change_or_delete_expense, getExpensesForUser, wait, account_options, awaitUserInput} from  '../app/functions';
 
 
@@ -38,6 +38,9 @@ async function main() {
       if (active_account !== "") {
         console.log(`User ${active_account} is logged in.`);
       }
+      else {
+        console.log("No user is logged in.");
+      }
       console.log("\n Smart Expense Tracker");
       console.log("1. Register");
       console.log("2. Login");
@@ -72,6 +75,10 @@ async function main() {
           break;
         case "6":
           console.log("Goodbye!");
+          const active_account = await find_active_account();
+          if (active_account !== "") {
+            switch_logged_in_status(active_account);
+          }
           rl.close();
           return;
         case "7":

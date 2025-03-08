@@ -1,3 +1,4 @@
+import { get } from "http";
 import { connectDB } from "./database";
 
 const COLLECTION_NAME = "Account";
@@ -103,7 +104,7 @@ async function getAllUsernames(): Promise<string[]> {
   return accounts.map(account => account.username);
 }
 
-export async function updates_specific_field(fieldName: string, account: string, value: any) {
+async function updates_specific_field(fieldName: string, account: string, value: any) {
   const db = await connectDB();
   if (!db) return;
 
@@ -118,6 +119,24 @@ export async function updates_specific_field(fieldName: string, account: string,
   );
 }
 
+async function switch_logged_in_status(username: string) {
+  const db = await connectDB();
+  if (!db) return;
+
+  const account = await getAccount(username);
+  let status = account?.loggedIn
+  if (status === true) {
+    status = false;
+  } else {
+    status = true;
+  }
+
+  await db.collection(COLLECTION_NAME).updateOne(
+    { username },
+    { $set: { loggedIn: status } }
+  );
+}
 
 
-export { createAccount, getAccount, updateBalance, deleteAccount, getAccountBalance, getAccountCurrency, amount_of_accounts, find_active_account, getAllUsernames};
+
+export { createAccount, getAccount, updateBalance, deleteAccount, getAccountBalance, getAccountCurrency, amount_of_accounts, find_active_account, getAllUsernames, switch_logged_in_status, updates_specific_field };

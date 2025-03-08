@@ -36,7 +36,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updates_specific_field = updates_specific_field;
 exports.createAccount = createAccount;
 exports.getAccount = getAccount;
 exports.updateBalance = updateBalance;
@@ -46,6 +45,8 @@ exports.getAccountCurrency = getAccountCurrency;
 exports.amount_of_accounts = amount_of_accounts;
 exports.find_active_account = find_active_account;
 exports.getAllUsernames = getAllUsernames;
+exports.switch_logged_in_status = switch_logged_in_status;
+exports.updates_specific_field = updates_specific_field;
 var database_1 = require("./database");
 var COLLECTION_NAME = "Account";
 // Create a new account
@@ -237,6 +238,34 @@ function updates_specific_field(fieldName, account, value) {
                         { $set: (_a = {}, _a[fieldName] = value, _a) })];
                 case 2:
                     _b.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function switch_logged_in_status(username) {
+    return __awaiter(this, void 0, void 0, function () {
+        var db, account, status;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/];
+                    return [4 /*yield*/, getAccount(username)];
+                case 2:
+                    account = _a.sent();
+                    status = account === null || account === void 0 ? void 0 : account.loggedIn;
+                    if (status === true) {
+                        status = false;
+                    }
+                    else {
+                        status = true;
+                    }
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ username: username }, { $set: { loggedIn: status } })];
+                case 3:
+                    _a.sent();
                     return [2 /*return*/];
             }
         });

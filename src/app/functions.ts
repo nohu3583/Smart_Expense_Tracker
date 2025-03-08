@@ -1,5 +1,5 @@
 import * as readline from 'readline';
-import { createAccount as createMongoAccount, getAccount, updateBalance, getAccountBalance, getAccountCurrency, Account, amount_of_accounts, find_active_account, deleteAccount, updates_specific_field} from '../mongodb/account';
+import { createAccount as createMongoAccount, getAccount, updateBalance, getAccountBalance, getAccountCurrency, Account, amount_of_accounts, find_active_account, deleteAccount, updates_specific_field, switch_logged_in_status} from '../mongodb/account';
 import { addExpense as addMongoExpense, Expense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense,getExpensesByDescription
     ,updateallaccountowner, deleteallexpense} from '../mongodb/expense';
 import * as crypto from 'crypto';
@@ -51,24 +51,23 @@ export async function loginUser() {
     console.log("User already logged in!");
     return;
   }
-  const password = await askQuestion("Enter password: ");
-  const hashed_password = crypto.createHash('sha256').update(password).digest("hex");
   if (account === null) {
         console.log("User does not exist!");
         return;
     }
+  const password = await askQuestion("Enter password: ");
+  const hashed_password = crypto.createHash('sha256').update(password).digest("hex");
   if (account?.password !== hashed_password) {
     console.log("Incorrect password!");
     return;
   }
   console.log("User logged in successfully!");
 
-  const active_account = await find_active_account(); // if there is an active account, log out it and then log in new account.
+  const active_account = await find_active_account();
   if (active_account !== "") { 
-    const account_logged_in = await getAccount(active_account);
-    account_logged_in!.loggedIn = false;
+    await switch_logged_in_status(active_account);
   }
-  account.loggedIn = true;
+  await switch_logged_in_status(username);
 }
 
 export async function logoutUser() {
@@ -78,7 +77,7 @@ export async function logoutUser() {
     return;
   }
   const account = await getAccount(active_account);
-  account!.loggedIn = false;
+  await switch_logged_in_status(active_account);
   console.log("User logged out successfully!");
 }
 
