@@ -21,10 +21,10 @@ async function createAccount(account: Account) {
 }
 
 // Get account by username
-async function getAccount(username: string) {
+async function getAccount(username: string) : Promise<Account | undefined | null> {
   const db = await connectDB();
   if (!db) return;
-  return db.collection(COLLECTION_NAME).findOne({username});
+  return db.collection(COLLECTION_NAME).findOne({username}) as unknown as Account;
 }
 
 // Update account balance
@@ -101,6 +101,21 @@ async function getAllUsernames(): Promise<string[]> {
     .toArray();
 
   return accounts.map(account => account.username);
+}
+
+export async function updates_specific_field(fieldName: string, account: string, value: any) {
+  const db = await connectDB();
+  if (!db) return;
+
+  if (!fieldName) {
+    console.log("Invalid field selection.");
+    return;
+  }
+
+  await db.collection(COLLECTION_NAME).updateOne(
+    { username: account },  // Assuming username is unique
+    { $set: { [fieldName]: value } }
+  );
 }
 
 

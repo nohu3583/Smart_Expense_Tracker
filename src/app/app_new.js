@@ -36,306 +36,151 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var readline = require("readline");
 var account_1 = require("../mongodb/account");
-var expense_1 = require("../mongodb/expense");
-var database_1 = require("../mongodb/database");
 var functions_1 = require("../app/functions");
-var rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-function askQuestion(query) {
-    return new Promise(function (resolve) { return rl.question(query, resolve); });
-}
-function registerUser() {
-    return __awaiter(this, void 0, void 0, function () {
-        var username, password, existingAccount, account;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    console.log("Register New User");
-                    return [4 /*yield*/, askQuestion("Enter username: ")];
-                case 1:
-                    username = _a.sent();
-                    return [4 /*yield*/, askQuestion("Enter password: ")];
-                case 2:
-                    password = _a.sent();
-                    return [4 /*yield*/, (0, account_1.getAccount)(username)];
-                case 3:
-                    existingAccount = _a.sent();
-                    if (existingAccount) {
-                        console.log("Username already exists!");
-                        return [2 /*return*/];
-                    }
-                    account = {
-                        accountOwner: username,
-                        balance: 0,
-                        currency: 'USD',
-                        username: username,
-                        password: password,
-                        loggedIn: false
-                    };
-                    return [4 /*yield*/, (0, account_1.createAccount)(account)];
-                case 4:
-                    _a.sent();
-                    console.log("User ".concat(username, " registered successfully!"));
-                    return [4 /*yield*/, createAccount(username)];
-                case 5:
-                    _a.sent();
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-function loginUser() {
-    return __awaiter(this, void 0, void 0, function () {
-        var username, password, account;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    console.log("User Login");
-                    return [4 /*yield*/, askQuestion("Enter username: ")];
-                case 1:
-                    username = _a.sent();
-                    return [4 /*yield*/, askQuestion("Enter password: ")];
-                case 2:
-                    password = _a.sent();
-                    return [4 /*yield*/, (0, account_1.getAccount)(username)];
-                case 3:
-                    account = _a.sent();
-                    if (account && account.password === password) {
-                        console.log("Login successful! Welcome, ".concat(username));
-                        return [2 /*return*/, username];
-                    }
-                    else {
-                        console.log("Invalid username or password.");
-                        return [2 /*return*/, null];
-                    }
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-function logoutUser(username) {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            console.log("Logout successful!");
-            return [2 /*return*/];
-        });
-    });
-}
-function createAccount(username) {
-    return __awaiter(this, void 0, void 0, function () {
-        var accountNumber, currency, balanceInput, balance, bankName, account;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    console.log("Create Bank Account");
-                    return [4 /*yield*/, askQuestion("Enter account number: ")];
-                case 1:
-                    accountNumber = _a.sent();
-                    return [4 /*yield*/, askQuestion("Enter currency (e.g., USD, EUR): ")];
-                case 2:
-                    currency = _a.sent();
-                    return [4 /*yield*/, askQuestion("Enter initial balance: ")];
-                case 3:
-                    balanceInput = _a.sent();
-                    balance = parseFloat(balanceInput);
-                    _a.label = 4;
-                case 4:
-                    if (!isNaN(balance)) return [3 /*break*/, 6];
-                    console.log("Invalid balance amount. Please enter a number.");
-                    return [4 /*yield*/, askQuestion("Enter initial balance: ")];
-                case 5:
-                    balanceInput = _a.sent();
-                    return [3 /*break*/, 4];
-                case 6: return [4 /*yield*/, askQuestion("Enter bank name: ")];
-                case 7:
-                    bankName = _a.sent();
-                    account = {
-                        accountOwner: username,
-                        balance: balance,
-                        currency: currency,
-                        username: username,
-                        password: '', // Password is not needed here
-                        loggedIn: false
-                    };
-                    return [4 /*yield*/, (0, account_1.createAccount)(account)];
-                case 8:
-                    _a.sent();
-                    console.log("Account created for ".concat(username, " with ").concat(balance, " ").concat(currency, " at ").concat(bankName));
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-function addExpense(username) {
-    return __awaiter(this, void 0, void 0, function () {
-        var description, amount_input, amount, currency, date_input, date, category, accountCurrency, currency_api_data, exchangeRate, expense, answer;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    console.log("Add expense");
-                    return [4 /*yield*/, askQuestion("Describe your purchase: ")];
-                case 1:
-                    description = _a.sent();
-                    return [4 /*yield*/, askQuestion("How much was it? ")];
-                case 2:
-                    amount_input = _a.sent();
-                    amount = parseFloat(amount_input);
-                    return [4 /*yield*/, askQuestion("In what currency? ")];
-                case 3:
-                    currency = _a.sent();
-                    return [4 /*yield*/, askQuestion("When was the purchase made?(format: YYYY-MM-DD) ")];
-                case 4:
-                    date_input = _a.sent();
-                    date = new Date(Date.parse(date_input));
-                    return [4 /*yield*/, askQuestion("What category does this fall under? \n" + functions_1.expense_categories + ":  ")];
-                case 5:
-                    category = _a.sent();
-                    _a.label = 6;
-                case 6:
-                    if (!(1 > parseFloat(category) || parseFloat(category) > 7)) return [3 /*break*/, 8];
-                    return [4 /*yield*/, askQuestion("Invalid category. Please enter a number between 1-7.")];
-                case 7:
-                    category = _a.sent();
-                    return [3 /*break*/, 6];
-                case 8:
-                    if (isNaN(amount)) {
-                        console.log("Invalid amount. Please enter a number.");
-                        return [2 /*return*/];
-                    }
-                    return [4 /*yield*/, (0, account_1.getAccountCurrency)(username)];
-                case 9:
-                    accountCurrency = _a.sent();
-                    if (!(currency !== accountCurrency)) return [3 /*break*/, 11];
-                    return [4 /*yield*/, fetch("https://api.exchangeratesapi.io/latest?base=".concat(currency))];
-                case 10:
-                    currency_api_data = _a.sent();
-                    exchangeRate = 1;
-                    amount = amount * exchangeRate;
-                    currency = accountCurrency;
-                    _a.label = 11;
-                case 11:
-                    expense = {
-                        amount: amount,
-                        category: category,
-                        date: date,
-                        accountOwner: username,
-                        description: description
-                    };
-                    return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
-                case 12:
-                    _a.sent();
-                    return [4 /*yield*/, (0, account_1.updateBalance)(username, -amount)];
-                case 13:
-                    _a.sent();
-                    console.log("Expense added for ".concat(amount, " ").concat(currency, " on ").concat(date, " in ").concat(category));
-                    return [4 /*yield*/, askQuestion("Do you want to add another expense? (yes/no) ")];
-                case 14:
-                    answer = _a.sent();
-                    if (!(answer.toLowerCase() === "yes")) return [3 /*break*/, 17];
-                    return [4 /*yield*/, wait(200)];
-                case 15:
-                    _a.sent();
-                    console.clear();
-                    return [4 /*yield*/, addExpense(username)];
-                case 16:
-                    _a.sent();
-                    _a.label = 17;
-                case 17: return [2 /*return*/];
-            }
-        });
-    });
-}
-function wait(ms) {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            return [2 /*return*/, new Promise(function (resolve) { return setTimeout(resolve, ms); })];
-        });
-    });
-}
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var choice, _a, username, userChoice, _b;
+        var choice, _a, account, active_account, choice, _b, what_do_do;
         return __generator(this, function (_c) {
             switch (_c.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0:
+                    if (!true) return [3 /*break*/, 34];
+                    return [4 /*yield*/, (0, account_1.amount_of_accounts)()];
                 case 1:
-                    _c.sent();
-                    _c.label = 2;
-                case 2:
-                    if (!true) return [3 /*break*/, 21];
+                    if (!((_c.sent()) === 0)) return [3 /*break*/, 10];
                     console.log("\n Smart Expense Tracker");
                     console.log("1. Register");
-                    console.log("2. Login");
-                    console.log("3. Add Expense");
-                    console.log("4. Logout");
-                    console.log("5. Exit");
-                    return [4 /*yield*/, askQuestion("Choose an option: ")];
-                case 3:
+                    console.log("2. Exit");
+                    console.log("3. For testing only, an account to test with is created");
+                    return [4 /*yield*/, (0, functions_1.askQuestion)("Choose an option: ")];
+                case 2:
                     choice = _c.sent();
                     _a = choice;
                     switch (_a) {
-                        case "1": return [3 /*break*/, 4];
-                        case "2": return [3 /*break*/, 6];
-                        case "3": return [3 /*break*/, 15];
-                        case "4": return [3 /*break*/, 16];
-                        case "5": return [3 /*break*/, 17];
+                        case "1": return [3 /*break*/, 3];
+                        case "2": return [3 /*break*/, 5];
+                        case "3": return [3 /*break*/, 6];
                     }
-                    return [3 /*break*/, 18];
-                case 4: return [4 /*yield*/, registerUser()];
+                    return [3 /*break*/, 8];
+                case 3: return [4 /*yield*/, (0, functions_1.registerUser)()];
+                case 4:
+                    _c.sent();
+                    return [3 /*break*/, 9];
                 case 5:
-                    _c.sent();
-                    return [3 /*break*/, 19];
-                case 6: return [4 /*yield*/, loginUser()];
-                case 7:
-                    username = _c.sent();
-                    if (!username) return [3 /*break*/, 14];
-                    // User is logged in, show additional options
-                    console.log("1. Add Expense");
-                    console.log("2. Logout");
-                    return [4 /*yield*/, askQuestion("Choose an option: ")];
-                case 8:
-                    userChoice = _c.sent();
-                    _b = userChoice;
-                    switch (_b) {
-                        case "1": return [3 /*break*/, 9];
-                        case "2": return [3 /*break*/, 11];
-                    }
-                    return [3 /*break*/, 13];
-                case 9: return [4 /*yield*/, addExpense(username)];
-                case 10:
-                    _c.sent();
-                    return [3 /*break*/, 14];
-                case 11: return [4 /*yield*/, logoutUser(username)];
-                case 12:
-                    _c.sent();
-                    return [3 /*break*/, 14];
-                case 13:
-                    console.log("Invalid option. Try again.");
-                    _c.label = 14;
-                case 14: return [3 /*break*/, 19];
-                case 15:
-                    console.log("Please login first.");
-                    return [3 /*break*/, 19];
-                case 16:
-                    console.log("No user is logged in.");
-                    return [3 /*break*/, 19];
-                case 17:
                     console.log("Goodbye!");
-                    rl.close();
+                    functions_1.rl.close();
                     return [2 /*return*/];
-                case 18:
+                case 6:
+                    account = {
+                        accountOwner: "123456",
+                        balance: 1000,
+                        currency: "USD",
+                        username: "noahhzr",
+                        password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", //hashas från 123456
+                        loggedIn: true
+                    };
+                    return [4 /*yield*/, (0, account_1.createAccount)(account)];
+                case 7:
+                    _c.sent();
+                    console.log("Testing account created successfully!");
+                    return [3 /*break*/, 9];
+                case 8:
                     console.log("Invalid option. Try again.");
-                    _c.label = 19;
-                case 19: return [4 /*yield*/, wait(2000)];
-                case 20:
+                    _c.label = 9;
+                case 9: return [3 /*break*/, 32];
+                case 10: return [4 /*yield*/, (0, account_1.find_active_account)()];
+                case 11:
+                    active_account = _c.sent();
+                    if (active_account !== "") {
+                        console.log("User ".concat(active_account, " is logged in."));
+                    }
+                    console.log("\n Smart Expense Tracker");
+                    console.log("1. Register");
+                    console.log("2. Login");
+                    console.log("3. Display Users");
+                    console.log("4. Add Expense");
+                    console.log("5. Logout");
+                    console.log("6. Exit");
+                    console.log("7. More options for expenses, change or delete as well as filtering by multiple options");
+                    console.log("8. Account options");
+                    return [4 /*yield*/, (0, functions_1.askQuestion)("Choose an option: ")];
+                case 12:
+                    choice = _c.sent();
+                    _b = choice;
+                    switch (_b) {
+                        case "1": return [3 /*break*/, 13];
+                        case "2": return [3 /*break*/, 15];
+                        case "3": return [3 /*break*/, 17];
+                        case "4": return [3 /*break*/, 18];
+                        case "5": return [3 /*break*/, 20];
+                        case "6": return [3 /*break*/, 22];
+                        case "7": return [3 /*break*/, 23];
+                        case "8": return [3 /*break*/, 29];
+                    }
+                    return [3 /*break*/, 31];
+                case 13:
+                    console.clear();
+                    return [4 /*yield*/, (0, functions_1.registerUser)()];
+                case 14:
+                    _c.sent();
+                    return [3 /*break*/, 32];
+                case 15:
+                    console.clear();
+                    return [4 /*yield*/, (0, functions_1.loginUser)()];
+                case 16:
+                    _c.sent();
+                    return [3 /*break*/, 32];
+                case 17:
+                    (0, account_1.getAllUsernames)().then(function (usernames) {
+                        console.log("Created users are: ".concat(usernames.join(", ")));
+                    });
+                    return [3 /*break*/, 32];
+                case 18:
+                    console.clear();
+                    return [4 /*yield*/, (0, functions_1.addExpense)()];
+                case 19:
+                    _c.sent();
+                    return [3 /*break*/, 32];
+                case 20: return [4 /*yield*/, (0, functions_1.logoutUser)()];
+                case 21:
+                    _c.sent();
+                    return [3 /*break*/, 32];
+                case 22:
+                    console.log("Goodbye!");
+                    functions_1.rl.close();
+                    return [2 /*return*/];
+                case 23: return [4 /*yield*/, (0, functions_1.askQuestion)("Do you want to change or delete an expense, or view expense? (change/delete/view): ")];
+                case 24:
+                    what_do_do = _c.sent();
+                    if (!(what_do_do === "change" || what_do_do === "delete")) return [3 /*break*/, 26];
+                    return [4 /*yield*/, (0, functions_1.change_or_delete_expense)()];
+                case 25:
+                    _c.sent();
+                    return [3 /*break*/, 29];
+                case 26:
+                    if (!(what_do_do === "view")) return [3 /*break*/, 28];
+                    return [4 /*yield*/, (0, functions_1.getExpensesForUser)()];
+                case 27:
+                    _c.sent();
+                    return [3 /*break*/, 29];
+                case 28:
+                    console.log("Invalid option. Try again.");
+                    _c.label = 29;
+                case 29:
+                    console.clear();
+                    return [4 /*yield*/, (0, functions_1.account_options)()];
+                case 30:
+                    _c.sent();
+                    return [3 /*break*/, 32];
+                case 31:
+                    console.log("Invalid option. Try again.");
+                    _c.label = 32;
+                case 32: return [4 /*yield*/, (0, functions_1.wait)(2000)];
+                case 33:
                     _c.sent();
                     console.clear();
-                    return [3 /*break*/, 2];
-                case 21: return [2 /*return*/];
+                    return [3 /*break*/, 0];
+                case 34: return [2 /*return*/];
             }
         });
     });

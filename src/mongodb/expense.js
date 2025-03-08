@@ -43,6 +43,9 @@ exports.getExpensesByDate = getExpensesByDate;
 exports.getExpensesByAmount = getExpensesByAmount;
 exports.deleteExpense = deleteExpense;
 exports.updateExpense = updateExpense;
+exports.getExpensesByDescription = getExpensesByDescription;
+exports.updateallaccountowner = updateallaccountowner;
+exports.deleteallexpense = deleteallexpense;
 var database_1 = require("./database");
 var COLLECTION_NAME = "Expense";
 // Add a new expense
@@ -126,7 +129,22 @@ function getExpensesByAmount(accountOwner, amount) {
         });
     });
 }
-function deleteExpense(accountOwner, description) {
+function getExpensesByDescription(accountOwner, description) {
+    return __awaiter(this, void 0, void 0, function () {
+        var db;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/];
+                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ accountOwner: accountOwner, description: description }).toArray()];
+            }
+        });
+    });
+}
+function deleteExpense(accountOwner, date, description) {
     return __awaiter(this, void 0, void 0, function () {
         var db;
         return __generator(this, function (_a) {
@@ -145,7 +163,7 @@ function deleteExpense(accountOwner, description) {
         });
     });
 }
-function updateExpense(accountOwner, description, amount, category, date) {
+function updateExpense(account, date, description, new_expense) {
     return __awaiter(this, void 0, void 0, function () {
         var db;
         return __generator(this, function (_a) {
@@ -155,10 +173,46 @@ function updateExpense(accountOwner, description, amount, category, date) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ accountOwner: accountOwner, description: description }, { $set: { amount: amount, category: category, date: date } })];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ accountOwner: account, date: date, description: description }, { $set: new_expense })];
                 case 2:
                     _a.sent();
-                    console.log("Expense Updated");
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function updateallaccountowner(old_account, new_account) {
+    return __awaiter(this, void 0, void 0, function () {
+        var db;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateMany({ accountOwner: old_account }, { $set: { accountOwner: new_account } })];
+                case 2:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function deleteallexpense(account) {
+    return __awaiter(this, void 0, void 0, function () {
+        var db;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).deleteMany({ accountOwner: account })];
+                case 2:
+                    _a.sent();
+                    console.log("All Expenses Deleted");
                     return [2 /*return*/];
             }
         });

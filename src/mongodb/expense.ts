@@ -48,7 +48,12 @@ async function getExpensesByAmount(accountOwner: string, amount: number) {
     return db.collection(COLLECTION_NAME).find({ accountOwner, amount }).toArray();
 }
 
-async function deleteExpense(accountOwner: string, description: string) {
+async function getExpensesByDescription(accountOwner: string, description: string) {
+  const db = await connectDB();
+    if (!db) return;
+    return db.collection(COLLECTION_NAME).find({ accountOwner, description }).toArray();
+}
+async function deleteExpense(accountOwner: string, date : Date, description: string) {
   const db = await connectDB();
     if (!db) return;
     
@@ -56,15 +61,32 @@ async function deleteExpense(accountOwner: string, description: string) {
     console.log("Expense Deleted");
 }
 
-async function updateExpense(accountOwner: string, description: string, amount: number, category: string, date: Date) {
+async function updateExpense(account : string , date : Date, description : string,  new_expense: Expense) {  
+  const db = await connectDB();
+    if (!db) return;
+  
+    await db.collection(COLLECTION_NAME).updateOne(
+      { accountOwner: account, date: date, description: description},
+      { $set: new_expense})
+}
+async function updateallaccountowner(old_account : string, new_account : string) {
+  const db = await connectDB();
+    if (!db) return;
+  
+    await db.collection(COLLECTION_NAME).updateMany(
+      { accountOwner: old_account},
+      { $set: {accountOwner: new_account}})
+}
+
+async function deleteallexpense(account : string) {
   const db = await connectDB();
     if (!db) return;
     
-    await db.collection(COLLECTION_NAME).updateOne(
-      { accountOwner, description },
-      { $set: { amount, category, date } }
-    );
-    console.log("Expense Updated");
+    await db.collection(COLLECTION_NAME).deleteMany({ accountOwner: account });
+    console.log("All Expenses Deleted");
 }
 
-export { addExpense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense };
+
+export {addExpense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense, getExpensesByDescription
+, updateallaccountowner, deleteallexpense
+};

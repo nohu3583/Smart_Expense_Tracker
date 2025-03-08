@@ -36,12 +36,16 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.updates_specific_field = updates_specific_field;
 exports.createAccount = createAccount;
 exports.getAccount = getAccount;
 exports.updateBalance = updateBalance;
 exports.deleteAccount = deleteAccount;
 exports.getAccountBalance = getAccountBalance;
 exports.getAccountCurrency = getAccountCurrency;
+exports.amount_of_accounts = amount_of_accounts;
+exports.find_active_account = find_active_account;
+exports.getAllUsernames = getAllUsernames;
 var database_1 = require("./database");
 var COLLECTION_NAME = "Account";
 // Create a new account
@@ -154,6 +158,86 @@ function getAccountCurrency(username) {
                 case 2:
                     account = _a.sent();
                     return [2 /*return*/, account ? account.currency : ""];
+            }
+        });
+    });
+}
+function amount_of_accounts() {
+    return __awaiter(this, void 0, void 0, function () {
+        var db, accounts;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/, 0];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).find().toArray()];
+                case 2:
+                    accounts = _a.sent();
+                    return [2 /*return*/, accounts.length];
+            }
+        });
+    });
+}
+function find_active_account() {
+    return __awaiter(this, void 0, void 0, function () {
+        var db, account;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/, ""];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).findOne({ loggedIn: true }, { projection: { username: 1, _id: 0 } })];
+                case 2:
+                    account = _a.sent();
+                    return [2 /*return*/, account ? account.username : ""];
+            }
+        });
+    });
+}
+function getAllUsernames() {
+    return __awaiter(this, void 0, void 0, function () {
+        var db, accounts;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/, []];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME)
+                            .find({}, { projection: { username: 1, _id: 0 } }) // Only fetch `username`
+                            .toArray()];
+                case 2:
+                    accounts = _a.sent();
+                    return [2 /*return*/, accounts.map(function (account) { return account.username; })];
+            }
+        });
+    });
+}
+function updates_specific_field(fieldName, account, value) {
+    return __awaiter(this, void 0, void 0, function () {
+        var db;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _b.sent();
+                    if (!db)
+                        return [2 /*return*/];
+                    if (!fieldName) {
+                        console.log("Invalid field selection.");
+                        return [2 /*return*/];
+                    }
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ username: account }, // Assuming username is unique
+                        { $set: (_a = {}, _a[fieldName] = value, _a) })];
+                case 2:
+                    _b.sent();
+                    return [2 /*return*/];
             }
         });
     });

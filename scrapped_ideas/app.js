@@ -41,7 +41,7 @@ var database_1 = require("../models/database");
 var user_1 = require("../models/user");
 var account_1 = require("../models/account");
 var expense_1 = require("../models/expense");
-var functions_1 = require("./functions");
+var functions_1 = require("../src/app/functions");
 var rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout

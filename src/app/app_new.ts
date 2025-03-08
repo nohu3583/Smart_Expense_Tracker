@@ -1,119 +1,6 @@
-import * as readline from 'readline';
-import { createAccount as createMongoAccount, getAccount, updateBalance, getAccountBalance, getAccountCurrency, Account, amount_of_accounts, find_active_account, getAllUsernames} from '../mongodb/account';
-import { addExpense as addMongoExpense, getExpenses, Expense } from '../mongodb/expense';
-import { connectDB } from '../mongodb/database';
-import {expense_categories} from  '../app/functions';
+import { createAccount,Account, amount_of_accounts, find_active_account, getAllUsernames} from '../mongodb/account';
+import {rl, askQuestion, registerUser, loginUser, logoutUser,addExpense, change_or_delete_expense, getExpensesForUser, wait, account_options, awaitUserInput} from  '../app/functions';
 
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-function askQuestion(query: string): Promise<string> {
-  return new Promise(resolve => rl.question(query, resolve));
-}
-
-
-async function registerUser() {
-  console.log("Register New User");
-  const username = await askQuestion("Enter username: ");
-  const password = await askQuestion("Enter password: "); // check for hidden input, so that password is not shown when registering
-  
-  if (await getAccount(username)) {
-    console.log("Username already exists!");
-    return;
-  }
-  else {
-    console.log("User registered successfully, but no account has been registered yet.");
-    const account_number = await askQuestion("Enter account number: ");
-    const balance = await askQuestion("Enter balance: ");
-    const currency = await askQuestion("Enter currency: ");
-    const account : Account = {
-      accountOwner: account_number,
-      balance: parseInt(balance),
-      currency: currency,
-      username : username,
-      password : password, 
-      loggedIn : false
-    }
-    await createMongoAccount(account);
-    console.log("Account created successfully!");
-  }
-}
-
-async function loginUser() {
-  const username = await askQuestion("Enter username: ");
-
-  const account = await getAccount(username);
-  if (account?.loggedIn === true) {
-    console.log("User already logged in!");
-    return;
-  }
-  const password = await askQuestion("Enter password: ");
-
-  if (account?.password !== password) {
-    console.log("Incorrect password!");
-    return;
-  }
-  console.log("User logged in successfully!");
-
-  const active_account = await find_active_account(); // if there is an active account, log out it and then log in new account.
-  if (active_account !== "") { 
-    const account_logged_in = await getAccount(active_account);
-    account_logged_in!.loggedIn = false;
-  }
-  account.loggedIn = true;
-}
-
-async function logoutUser() {
-  const active_account = await find_active_account();
-  if (active_account === "") {
-    console.log("No user is logged in!");
-    return;
-  }
-  const account = await getAccount(active_account);
-  account!.loggedIn = false;
-  console.log("User logged out successfully!");
-}
-
-async function addExpense() {
-  const active_account = await find_active_account();
-  if (active_account === "") {
-    console.log("No user is logged in!");
-    return;
-  }
-  const amount = await askQuestion("Enter amount: ");
-  const category = await askQuestion("Enter category: ");
-  const date = await askQuestion("Enter date: ");
-  let date_parsed = new Date(date); // check if date is in correct format
-  while (isNaN(date_parsed.getTime())) {
-    console.log("Invalid date format. Try again.");
-    const date = await askQuestion("Enter date: ");
-    date_parsed = new Date(date);
-  }
-  const description = await askQuestion("Enter description: ");
-
-  const expense : Expense = {
-    amount: parseInt(amount),
-    category: category,
-    date: date_parsed,
-    accountOwner: active_account,
-    description : description
-    }
-  await addMongoExpense(expense);
-  console.log("Expense added successfully!");
-  
-  //change balance for active account
-  const account = await getAccount(active_account);
-  if (account) { // check if account exists than update balance so that it is changed after each expense
-    account.balance -= parseInt(amount);
-    await updateBalance(account.accountOwner, account.balance);
-  }
-}
-async function wait(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
 
 async function main() {
   while (true) {
@@ -121,7 +8,7 @@ async function main() {
       console.log("\n Smart Expense Tracker");
       console.log("1. Register");
       console.log("2. Exit");
-      console.log("3. For testing only")
+      console.log("3. For testing only, an account to test with is created");
       const choice = await askQuestion("Choose an option: ");
       switch (choice) {
         case "1":
@@ -137,16 +24,20 @@ async function main() {
             balance : 1000,
             currency : "USD",
             username : "noahhzr",
-            password : "123456",
-            loggedIn : false
+            password : "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", //hashas från 123456
+            loggedIn : true
           }
-          await createMongoAccount(account);
+          await createAccount(account);
           console.log("Testing account created successfully!");
           break;
         default:
           console.log("Invalid option. Try again.");
       }
     } else {
+      const active_account = await find_active_account();
+      if (active_account !== "") {
+        console.log(`User ${active_account} is logged in.`);
+      }
       console.log("\n Smart Expense Tracker");
       console.log("1. Register");
       console.log("2. Login");
@@ -154,28 +45,48 @@ async function main() {
       console.log("4. Add Expense");
       console.log("5. Logout");
       console.log("6. Exit");
+      console.log("7. More options for expenses, change or delete as well as filtering by multiple options");
+      console.log("8. Account options");
+
       const choice = await askQuestion("Choose an option: ");
       switch (choice) {
         case "1":
+          console.clear();
           await registerUser();
           break;
         case "2":
-          const user = await loginUser();
+          console.clear();
+          await loginUser();
           break;
         case "3":
-          const usernames = getAllUsernames();
-          console.log(`Created user are: ${usernames}`);
+          getAllUsernames().then(usernames => {
+            console.log(`Created users are: ${usernames.join(", ")}`);
+          });
           break;
         case "4":
+          console.clear();
           await addExpense();
           break;
         case "5":
           await logoutUser();
-          rl.close()
+          break;
         case "6":
           console.log("Goodbye!");
           rl.close();
           return;
+        case "7":
+          const what_do_do = await askQuestion("Do you want to change or delete an expense, or view expense? (change/delete/view): ");
+          if (what_do_do === "change" || what_do_do === "delete") {
+            await change_or_delete_expense();
+          } else if (what_do_do === "view") {
+            await getExpensesForUser();
+          } else {
+            console.log("Invalid option. Try again.");
+          }
+        case "8":
+          console.clear();
+          await account_options();
+          break;
         default:
           console.log("Invalid option. Try again.");
 

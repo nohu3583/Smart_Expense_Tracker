@@ -7,12 +7,10 @@ const client = new MongoClient(MONGO_URI);
 async function connectDB() {
   try {
     await client.connect();
-    console.log("✅ Connected to MongoDB Atlas");
     return client.db("expenseTracker"); // Use your database name
   } catch (error) {
-    console.error("❌ MongoDB Atlas Connection Error:", error);
+    console.error("MongoDB Atlas Connection Error:", error);
   }
 }
-
-export { connectDB, client };
+export {connectDB, client };
 
