@@ -4,9 +4,9 @@ import { addExpense as addMongoExpense, Expense, getExpenses, getExpensesByCateg
     ,updateallaccountowner, deleteallexpense} from '../mongodb/expense';
 import * as crypto from 'crypto';
 import fs from 'fs';
-import path from 'path';
 import csvParser from 'csv-parser';
-import e from 'express';
+import { stringify } from "csv-stringify";
+
 
 
 export const expense_categories = ["1. Food", " 2. Housing", " 3. Transportation", " 4. Health and wellness", " 5. Shopping", " 6. Entertainment", " 7. Other"]
@@ -366,10 +366,58 @@ export async function csvparser(inputfile: string) {
                   console.log("No valid expenses found in the file.");
               }
               resolve();
-          }) // ❌ Removed extra semicolon here
-          .on("error", (error: Error) => { // ✅ No syntax error
+          }) 
+          .on("error", (error: Error) => { 
               console.log("Error: ", error.message);
               reject(error);
           });
+  });
+}
+
+export async function exportExpenseCsvFile() {
+  const active_account = await find_active_account();
+  if (active_account === "") {
+      console.log("No user is logged in!");
+      return;
+  }
+
+  const expenses = await getExpenses(active_account);
+  if (!expenses || expenses.length === 0) {
+      console.log("No expenses found for the active account.");
+      return;
+  }
+
+  // Define CSV file name
+  const filename = `expenses_${active_account}.csv`;
+  const writableStream = fs.createWriteStream(filename);
+
+  // Define CSV headers
+  const columns = ["amount", "category", "date", "accountOwner", "description"];
+
+  const stringifier = stringify({ header: true, columns });
+
+  // Pipe CSV data into the writable stream
+  stringifier.pipe(writableStream);
+
+  // Add each expense row
+  expenses.forEach(expense => {
+      stringifier.write({
+          amount: expense.amount,
+          category: expense.category,
+          date: expense.date.toISOString().split("T")[0], // Format date as YYYY-MM-DD
+          accountOwner: expense.accountOwner,
+          description: expense.description,
+      });
+  });
+
+  // End the stream
+  stringifier.end();
+
+  writableStream.on("finish", () => {
+      console.log(`Expenses successfully exported to ${filename}`);
+  });
+
+  writableStream.on("error", (error) => {
+      console.error("Error writing to CSV file:", error);
   });
 }
