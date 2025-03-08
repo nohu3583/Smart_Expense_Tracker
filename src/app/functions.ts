@@ -3,6 +3,11 @@ import { createAccount as createMongoAccount, getAccount, updateBalance, getAcco
 import { addExpense as addMongoExpense, Expense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense,getExpensesByDescription
     ,updateallaccountowner, deleteallexpense} from '../mongodb/expense';
 import * as crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import csvParser from 'csv-parser';
+import e from 'express';
+
 
 export const expense_categories = ["1. Food", " 2. Housing", " 3. Transportation", " 4. Health and wellness", " 5. Shopping", " 6. Entertainment", " 7. Other"]
 
@@ -308,4 +313,63 @@ export async function account_options() {
 
 export async function awaitUserInput() {
   askQuestion("Press enter to continue: ");
+}
+
+export async function csvparser(inputfile: string) {
+  const active_account = await find_active_account();
+  if (active_account === "") {
+      console.log("No user is logged in!");
+      return;
+  }
+  const active_account_info = await getAccount(active_account);
+  const account_balance = active_account_info!.balance;
+  let total_expense = 0;
+
+  return new Promise<void>((resolve, reject) => {
+      const expenses: Expense[] = [];
+      fs.createReadStream(inputfile)
+          .pipe(csvParser())
+          .on("data", (row: Expense) => {
+              if (row.accountOwner !== active_account) {
+                  console.log("Error: Account number does not match the active account. Skipping row.");
+                  return;
+              }
+
+              const amount = parseFloat(row.amount as unknown as string);
+              if (isNaN(amount) || amount <= 0) {
+                  console.log("Error: Amount must be a number. Skipping row.");
+                  return;
+              }
+
+              total_expense += amount;
+
+              expenses.push({
+                  amount: amount,
+                  category: row.category,
+                  date: new Date(row.date),
+                  accountOwner: active_account,
+                  description: row.description,
+              });
+          })
+          .on("end", async () => {
+              if (total_expense > account_balance) {
+                  console.log("Import failed. Total expenses exceed available balance in account");
+                  return;
+              }
+
+              if (expenses.length > 0) {
+                  for (let i = 0; i < expenses.length; i++) {
+                      await addMongoExpense(expenses[i]);
+                      console.log("Expense added successfully!");
+                  }
+              } else {
+                  console.log("No valid expenses found in the file.");
+              }
+              resolve();
+          }) // ❌ Removed extra semicolon here
+          .on("error", (error: Error) => { // ✅ No syntax error
+              console.log("Error: ", error.message);
+              reject(error);
+          });
+  });
 }
