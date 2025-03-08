@@ -87,6 +87,12 @@ export async function logoutUser() {
 }
 
 export async function addExpense() {
+  const question = await askQuestion("Do you want to add manually or import from CSV? (manual/csv): ");
+  if (question === "csv") {
+    const inputfile = await askQuestion("Enter the name of the CSV file: ");
+    await csvparser(inputfile);
+    return;
+  }
   const active_account = await find_active_account();
   if (active_account === "") {
     console.log("No user is logged in!");
@@ -173,6 +179,7 @@ export async function getExpensesForUser() {
   console.log("3. Get expenses by date");
   console.log("4. Get expenses by amount");
   console.log("5. Get expenses by description");
+  console.log("6. Export expenses to CSV file");
 
   const choice = await askQuestion("Choose an option: ");
   const active_account = await find_active_account();
@@ -205,6 +212,9 @@ export async function getExpensesForUser() {
       const description = await askQuestion("Enter description: ");
       const expenses_description = await getExpensesByDescription(active_account, description);
       console.log(expenses_description);
+      break;
+    case "6":
+      await exportExpenseCsvFile();
       break;
     default:
       console.log("Invalid option. Try again.");
@@ -417,7 +427,7 @@ export async function exportExpenseCsvFile() {
       console.log(`Expenses successfully exported to ${filename}`);
   });
 
-  writableStream.on("error", (error) => {
+  writableStream.on("error", (error : Error) => {
       console.error("Error writing to CSV file:", error);
   });
 }
