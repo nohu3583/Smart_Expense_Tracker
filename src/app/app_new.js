@@ -35,16 +35,54 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 var account_1 = require("../mongodb/account");
 var functions_1 = require("../app/functions");
+var apiURL = 'http://localhost:3000/api/expense';
+var sendExpense = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var amountInput, amount, response, data, error_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                amountInput = document.getElementById('amount');
+                amount = amountInput.value;
+                if (!amount) {
+                    alert('Please enter an amount.');
+                    return [2 /*return*/];
+                }
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 4, , 5]);
+                return [4 /*yield*/, fetch(apiURL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: amount })
+                    })];
+            case 2:
+                response = _a.sent();
+                return [4 /*yield*/, response.json()];
+            case 3:
+                data = _a.sent();
+                alert(data.message);
+                return [3 /*break*/, 5];
+            case 4:
+                error_1 = _a.sent();
+                console.error('Error sending expense:', error_1);
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+(_a = document.getElementById('submit')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', sendExpense);
+(_b = document.getElementById('submit')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', sendExpense);
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var choice, _a, account, active_account, choice, _b, active_account_1, what_do_do;
+        var choice, _a, account, active_account, choice, _b, what_do_do;
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    if (!true) return [3 /*break*/, 35];
+                    if (!true) return [3 /*break*/, 34];
                     return [4 /*yield*/, (0, account_1.amount_of_accounts)()];
                 case 1:
                     if (!((_c.sent()) === 0)) return [3 /*break*/, 10];
@@ -87,15 +125,12 @@ function main() {
                 case 8:
                     console.log("Invalid option. Try again.");
                     _c.label = 9;
-                case 9: return [3 /*break*/, 33];
+                case 9: return [3 /*break*/, 32];
                 case 10: return [4 /*yield*/, (0, account_1.find_active_account)()];
                 case 11:
                     active_account = _c.sent();
                     if (active_account !== "") {
                         console.log("User ".concat(active_account, " is logged in."));
-                    }
-                    else {
-                        console.log("No user is logged in.");
                     }
                     console.log("\n Smart Expense Tracker");
                     console.log("1. Register");
@@ -117,79 +152,73 @@ function main() {
                         case "4": return [3 /*break*/, 18];
                         case "5": return [3 /*break*/, 20];
                         case "6": return [3 /*break*/, 22];
-                        case "7": return [3 /*break*/, 24];
-                        case "8": return [3 /*break*/, 30];
+                        case "7": return [3 /*break*/, 23];
+                        case "8": return [3 /*break*/, 29];
                     }
-                    return [3 /*break*/, 32];
+                    return [3 /*break*/, 31];
                 case 13:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.registerUser)()];
                 case 14:
                     _c.sent();
-                    return [3 /*break*/, 33];
+                    return [3 /*break*/, 32];
                 case 15:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.loginUser)()];
                 case 16:
                     _c.sent();
-                    return [3 /*break*/, 33];
+                    return [3 /*break*/, 32];
                 case 17:
                     (0, account_1.getAllUsernames)().then(function (usernames) {
                         console.log("Created users are: ".concat(usernames.join(", ")));
                     });
-                    return [3 /*break*/, 33];
+                    return [3 /*break*/, 32];
                 case 18:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.addExpense)()];
                 case 19:
                     _c.sent();
-                    return [3 /*break*/, 33];
+                    return [3 /*break*/, 32];
                 case 20: return [4 /*yield*/, (0, functions_1.logoutUser)()];
                 case 21:
                     _c.sent();
-                    return [3 /*break*/, 33];
+                    return [3 /*break*/, 32];
                 case 22:
                     console.log("Goodbye!");
-                    return [4 /*yield*/, (0, account_1.find_active_account)()];
-                case 23:
-                    active_account_1 = _c.sent();
-                    if (active_account_1 !== "") {
-                        (0, account_1.switch_logged_in_status)(active_account_1);
-                    }
                     functions_1.rl.close();
                     return [2 /*return*/];
-                case 24: return [4 /*yield*/, (0, functions_1.askQuestion)("Do you want to change or delete an expense, or view expense? (change/delete/view): ")];
-                case 25:
+                case 23: return [4 /*yield*/, (0, functions_1.askQuestion)("Do you want to change or delete an expense, or view expense? (change/delete/view): ")];
+                case 24:
                     what_do_do = _c.sent();
-                    if (!(what_do_do === "change" || what_do_do === "delete")) return [3 /*break*/, 27];
+                    if (!(what_do_do === "change" || what_do_do === "delete")) return [3 /*break*/, 26];
                     return [4 /*yield*/, (0, functions_1.change_or_delete_expense)()];
+                case 25:
+                    _c.sent();
+                    return [3 /*break*/, 29];
                 case 26:
-                    _c.sent();
-                    return [3 /*break*/, 30];
-                case 27:
-                    if (!(what_do_do === "view")) return [3 /*break*/, 29];
+                    if (!(what_do_do === "view")) return [3 /*break*/, 28];
                     return [4 /*yield*/, (0, functions_1.getExpensesForUser)()];
-                case 28:
+                case 27:
                     _c.sent();
-                    return [3 /*break*/, 30];
-                case 29:
+                    return [3 /*break*/, 29];
+                case 28:
                     console.log("Invalid option. Try again.");
-                    _c.label = 30;
-                case 30:
+                    _c.label = 29;
+                case 29:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.account_options)()];
-                case 31:
+                case 30:
                     _c.sent();
-                    return [3 /*break*/, 33];
-                case 32:
+                    return [3 /*break*/, 32];
+                case 31:
                     console.log("Invalid option. Try again.");
-                    _c.label = 33;
-                case 33: return [4 /*yield*/, (0, functions_1.wait)(2000)];
-                case 34:
+                    _c.label = 32;
+                case 32: return [4 /*yield*/, (0, functions_1.wait)(2000)];
+                case 33:
                     _c.sent();
                     console.clear();
                     return [3 /*break*/, 0];
-                case 35: return [2 /*return*/];
+                case 34: return [2 /*return*/];
             }
         });
     });

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <div class="logo"> <a href="" class="logo_link"> Welcone "USERNAME" </a></div>
+        </header>
+        <main class="main meny">
+            <div class="title">Add expense</div>
+            <section class="addexpense">
+                <input type="number" min="0" placeholder="Amount">
+                <select>
+                    <option>Food</option>
+                    <option>Houseing</option>
+                    <option>Transportation</option>
+                    <option>Health and wellness</option>
+                    <option>Shopping</option>
+                    <option>Entertainment</option>
+                    <option>Other</option>
+                </select>
+                <input type="date">
+                <input type="text" placeholder="Description" class="full-width">
+                <button id="submit">Add Expense</button>
+            </section>
+            <div class="expense_history">
+                <ul>
+                    <table><h1 class="opt opt_link">Expense History</h1></table>
+                </ul>
+            </div>
+            <div class="opt mini_meny"> <a href="index.html" class="opt_link">Back</a></div>
+            <div class="pi_chart"><h1 class="opt opt_link">Pi-chart</h1></div>
+        </main>        
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

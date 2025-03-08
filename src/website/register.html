@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <div class="logo"> <a href="register.html" class="logo_link"> Register account </a></div>
+        </header>
+        <main class="main register">
+            <div style="margin: 1px;">
+            <input type="text" placeholder="Username">
+            <input type="text" placeholder="Password">
+            <input type="number" min="0" placeholder="Account number">
+            <input type="text" placeholder="Currency (e.g. EUR, SEK)">
+            <input type="number" min="0" placeholder="initial balance">
+            <input type="text" placeholder="Bank name">
+            <button id="submit">Register</button>
+            </div>
+            <div class="opt"><a href="index.html" class="opt_link">Cancle</a></div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

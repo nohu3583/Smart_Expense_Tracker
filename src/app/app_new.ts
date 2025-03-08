@@ -1,7 +1,35 @@
-import { createAccount,Account, amount_of_accounts, find_active_account, getAllUsernames, switch_logged_in_status} from '../mongodb/account';
+import { createAccount,Account, amount_of_accounts, find_active_account, getAllUsernames} from '../mongodb/account';
 import {rl, askQuestion, registerUser, loginUser, logoutUser,addExpense, change_or_delete_expense, getExpensesForUser, wait, account_options, awaitUserInput} from  '../app/functions';
+import { connectDB } from '../mongodb/database';
+const apiURL = 'http://localhost:3000/api/expense';
+
+const sendExpense = async () => {
+  const amountInput = document.getElementById('amount') as HTMLInputElement;
+  const amount = amountInput.value;
+
+  if (!amount) {
+      alert('Please enter an amount.');
+      return;
+  }
+
+  try {
+      const response = await fetch(apiURL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount })
+      });
+
+      const data = await response.json();
+      alert(data.message);
+  } catch (error) {
+      console.error('Error sending expense:', error);
+  }
+};
+
+document.getElementById('submit')?.addEventListener('click', sendExpense);
 
 
+document.getElementById('submit')?.addEventListener('click', sendExpense);
 async function main() {
   while (true) {
     if (await amount_of_accounts() === 0) {
@@ -38,9 +66,6 @@ async function main() {
       if (active_account !== "") {
         console.log(`User ${active_account} is logged in.`);
       }
-      else {
-        console.log("No user is logged in.");
-      }
       console.log("\n Smart Expense Tracker");
       console.log("1. Register");
       console.log("2. Login");
@@ -75,10 +100,6 @@ async function main() {
           break;
         case "6":
           console.log("Goodbye!");
-          const active_account = await find_active_account();
-          if (active_account !== "") {
-            switch_logged_in_status(active_account);
-          }
           rl.close();
           return;
         case "7":

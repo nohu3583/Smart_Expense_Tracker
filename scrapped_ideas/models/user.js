@@ -1,36 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
-var User = /** @class */ (function () {
-    function User(username, password, account_id, logged_in) {
+class User {
+    constructor(username, password, account_id, logged_in) {
         this.username = username;
         this.password = password;
         this.account_id = account_id;
         this.logged_in = logged_in;
     }
-    User.prototype.authenticate = function (inputPassword) {
+    authenticate(inputPassword) {
         return this.password === inputPassword;
-    };
-    User.prototype.input_account_number = function (account_number) {
+    }
+    input_account_number(account_number) {
         this.account_id = account_number;
-    };
-    User.prototype.get_account_number = function () {
+    }
+    get_account_number() {
         return this.account_id;
-    };
-    User.prototype.get_account_username = function () {
+    }
+    get_account_username() {
         return this.username;
-    };
-    User.prototype.get_account_status = function () {
+    }
+    get_account_status() {
         return this.logged_in;
-    };
-    User.prototype.change_account_status = function (status) {
+    }
+    change_account_status(status) {
         if (status === true) {
             this.logged_in = false;
         }
         else {
             this.logged_in = true;
         }
-    };
-    return User;
-}());
+    }
+}
 exports.User = User;
