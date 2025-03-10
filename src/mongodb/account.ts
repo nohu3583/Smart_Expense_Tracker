@@ -1,4 +1,5 @@
-import { connectDB } from "./database";
+import { get } from "http";
+import { connectDB } from "./database.js";
 
 const COLLECTION_NAME = "Account";
 
