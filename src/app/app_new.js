@@ -35,47 +35,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
 var account_1 = require("../mongodb/account");
 var functions_1 = require("../app/functions");
-var apiURL = 'http://localhost:3000/api/expense';
-var sendExpense = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var amountInput, amount, response, data, error_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                amountInput = document.getElementById('amount');
-                amount = amountInput.value;
-                if (!amount) {
-                    alert('Please enter an amount.');
-                    return [2 /*return*/];
-                }
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 4, , 5]);
-                return [4 /*yield*/, fetch(apiURL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ amount: amount })
-                    })];
-            case 2:
-                response = _a.sent();
-                return [4 /*yield*/, response.json()];
-            case 3:
-                data = _a.sent();
-                alert(data.message);
-                return [3 /*break*/, 5];
-            case 4:
-                error_1 = _a.sent();
-                console.error('Error sending expense:', error_1);
-                return [3 /*break*/, 5];
-            case 5: return [2 /*return*/];
-        }
-    });
-}); };
-(_a = document.getElementById('submit')) === null || _a === void 0 ? void 0 : _a.addEventListener('click', sendExpense);
-(_b = document.getElementById('submit')) === null || _b === void 0 ? void 0 : _b.addEventListener('click', sendExpense);
 function main() {
     return __awaiter(this, void 0, void 0, function () {
         var choice, _a, account, active_account, choice, _b, what_do_do;

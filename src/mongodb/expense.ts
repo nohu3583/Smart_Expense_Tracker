@@ -63,12 +63,18 @@ async function getExpensesByDescription(accountOwner: string, description: strin
     if (!db) return;
     return db.collection(COLLECTION_NAME).find({ accountOwner, description }).toArray();
 }
-async function deleteExpense(accountOwner: string, date : Date, description: string) {
+
+async function deleteExpense(accountOwner: string, date: Date, description: string) {
   const db = await connectDB();
-    if (!db) return;
-    
-    await db.collection(COLLECTION_NAME).deleteOne({ accountOwner, description });
+  if (!db) return;
+
+  const result = await db.collection(COLLECTION_NAME).deleteOne({ accountOwner, description });
+
+  if (result.deletedCount === 0) {
+    console.log("Expense not found");
+  } else {
     console.log("Expense Deleted");
+  }
 }
 
 async function updateExpense(account : string , date : Date, description : string,  new_expense: Expense) {  

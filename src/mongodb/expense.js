@@ -157,7 +157,7 @@ function getExpensesByDescription(accountOwner, description) {
 }
 function deleteExpense(accountOwner, date, description) {
     return __awaiter(this, void 0, void 0, function () {
-        var db;
+        var db, result;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
@@ -167,8 +167,13 @@ function deleteExpense(accountOwner, date, description) {
                         return [2 /*return*/];
                     return [4 /*yield*/, db.collection(COLLECTION_NAME).deleteOne({ accountOwner: accountOwner, description: description })];
                 case 2:
-                    _a.sent();
-                    console.log("Expense Deleted");
+                    result = _a.sent();
+                    if (result.deletedCount === 0) {
+                        console.log("Expense not found");
+                    }
+                    else {
+                        console.log("Expense Deleted");
+                    }
                     return [2 /*return*/];
             }
         });

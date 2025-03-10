@@ -3,10 +3,10 @@ import { createAccount as createMongoAccount, getAccount, updateBalance, Account
 import { addExpense as addMongoExpense, Expense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense,getExpensesByDescription
     ,updateallaccountowner, deleteallexpense, get_total_expense_account} from '../mongodb/expense';
 import * as crypto from 'crypto';
-import fs from 'fs';
-import csvParser from 'csv-parser';
-import { stringify } from "csv-stringify";
-
+import * as fs from 'fs';
+import * as path from 'path';
+import csv from 'csv-parser';
+import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 //helper functions
 
 /**
@@ -17,11 +17,9 @@ import { stringify } from "csv-stringify";
 async function askCategorySelection(prompt: string): Promise<string> {
   let category: string;
   
-  // Display category options
   const categoryChoices = Object.entries(expense_categories)
     .map(([key, value]) => `${key}. ${value}`)
     .join("\n");
-
   do {
     category = await askQuestion(`${prompt}\n${categoryChoices}\nEnter choice (only number): `);
     
@@ -72,7 +70,7 @@ export const rl = readline.createInterface({
 * // askquestion("Enter a number: ");
 * // returns Promise<string>
 * @param {string} query - question to ask the user
-* @precondition - no preconditions
+* @precondition - no precondition
 * @returns {Promise<string>} Returns a promise that resolves to the user's answer
 */
 export function askQuestion(query: string): Promise<string> {
@@ -103,13 +101,20 @@ export async function registerUser() : Promise<void> {
       const account_number = await askQuestion("Enter account number: ");
       const balance = await askQuestion("Enter balance: ");
       const currency = await askQuestion("Enter currency: ");
+      const question = await askQuestion("Do you want to add limit on your account(yes/no)")
+      let account_limit: string | undefined = undefined;
+      if (question === "yes") {
+        account_limit = await askQuestion("What limit on spending should this account have per 30 days(optional)");
+      }
+
       const account : Account = {
         accountOwner: account_number,
         balance: parseInt(balance),
         currency: currency,
         username : username,
         password : hashed_password, 
-        loggedIn : false
+        loggedIn : false, 
+        limit_account : account_limit ? parseFloat(account_limit) : undefined
       }
       console.log("Account created successfully!");
       await createMongoAccount(account);
@@ -157,7 +162,7 @@ export async function loginUser() : Promise<void> {
 * If the user is successfully logged out, the function will update the database and sets loggedIn status to false.
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, no return.
 */
-export async function logoutUser() {
+export async function logoutUser() : Promise<void> {
   const active_account = await find_active_account();
   if (active_account === "") {
     console.log("No user is logged in!");
@@ -199,6 +204,7 @@ export async function addExpense() : Promise<void> {
   if (question === "csv") {
     const inputfile = await askQuestion("Enter the name of the CSV file: ");
     await csvparser(inputfile);
+    await oncallCheckExpenseLimit();
     return;
   }
   const amount = await askQuestion("Enter amount: ");
@@ -214,6 +220,7 @@ export async function addExpense() : Promise<void> {
     }
   await addMongoExpense(expense);
   console.log("Expense added successfully!");
+  await oncallCheckExpenseLimit();
   
   const account = await getAccount(active_account);
   if (account) { 
@@ -306,7 +313,7 @@ export async function getExpensesForUser() {
     case "1":
       const expenses = await getExpenses(active_account);
       console.log(expenses);
-      break;
+      const awaits = await askQuestion("press any button to continue");
     case "2":
       const categoryName = await askCategorySelection("What category do you want to change this purchase to be in?");
       const expenses_category = await getExpensesByCategory(active_account, categoryName);
@@ -378,20 +385,17 @@ export async function account_options() : Promise<void> {
         return;
       }
 
-      let value : string | number = "temp";
+      let value : string | number | undefined = "temp";
       switch (change_to) {
         case "1":
           value = await askQuestion("Enter new account number: ");
           updateallaccountowner(account.accountOwner, value);
           break;
         case "2":
-          while (typeof value === 'string' || isNaN(value)) 
-          {
           value = await askQuestion("Enter new balance: ");
-          value = parseFloat(value);
-          if (isNaN(value)) {
-            console.log("Balance must be a number. Try again.");
-          }
+          while (isNaN(parseInt(value)) || parseInt(value) < 0)  {
+            console.log("Balance must be a positive number")
+            value = await askQuestion("Enter new balance: ");
           }
           break;
         case "3":
@@ -409,6 +413,12 @@ export async function account_options() : Promise<void> {
           value = await askQuestion("Enter new password: ");
           value = crypto.createHash('sha256').update(value).digest("hex");
           break;
+        case "6":
+          value = await askQuestion("Enter new limit for spending: ");
+          while (isNaN(parseInt(value)) || parseInt(value) < 0)  {
+            console.log("The new account limit must be a positive number")
+            value = await askQuestion("Enter new balance: ");
+          }
         default:
           console.log("Invalid option. Try again.");
           return;
@@ -420,6 +430,7 @@ export async function account_options() : Promise<void> {
         "3": "currency",
         "4": "username",
         "5": "password",
+        "6": "limit_account"
       };
 
       if (fieldNames[change_to]) {
@@ -449,7 +460,8 @@ export async function account_options() : Promise<void> {
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
 */
 export async function awaitUserInput() : Promise<void>{
-  askQuestion("Press enter to continue: ");
+  askQuestion("Press any button to continue: ");
+  
 }
 
 /**
@@ -459,62 +471,95 @@ export async function awaitUserInput() : Promise<void>{
 * @precondition - no preconditions
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
 */
-export async function csvparser(inputfile: string) : Promise<void> {
+export async function csvparser(inputfile: string): Promise<void> {
   const active_account = await find_active_account();
-  if (active_account === "") {
-      console.log("No user is logged in!");
-      return;
+  if (!active_account) {
+    console.log("No user logged in!");
+    return;
   }
-  const active_account_info = await getAccount(active_account);
-  const account_balance = active_account_info!.balance;
-  let total_expense = 0;
 
-  return new Promise<void>((resolve, reject) => {
-      const expenses: Expense[] = [];
-      fs.createReadStream(inputfile)
-          .pipe(csvParser())
-          .on("data", (row: Expense) => {
-              if (row.username !== active_account) {
-                  console.log("Error: Account number does not match the active account. Skipping row.");
-                  return;
-              }
+  const account = await getAccount(active_account);
+  if (!account) {
+    console.log("Account not found!");
+    return;
+  }
 
-              const amount = parseFloat(row.amount as unknown as string);
-              if (isNaN(amount) || amount <= 0) {
-                  console.log("Error: Amount must be a number. Skipping row.");
-                  return;
-              }
+  const results: any[] = [];
+  const validExpenses: Expense[] = [];
+  
+  return new Promise((resolve, reject) => {
+    fs.createReadStream(inputfile)
+      .pipe(csv())
+      .on('data', (data: any) => results.push(data))
+      .on('end', async () => {
+        try {
+          let totalAmount = 0;
+          
+          for (const row of results) {
+            if (!row.amount || !row.date || !row.category || !row.description) {
+              console.log(`Skipping invalid row: ${JSON.stringify(row)}`);
+              continue;
+            }
 
-              total_expense += amount;
+            const categoryKey = Object.keys(expense_categories).find(
+              key => expense_categories[key] === row.category
+            );
+            
+            if (!categoryKey) {
+              console.log(`Skipping row with invalid category: ${row.category}`);
+              continue;
+            }
 
-              expenses.push({
-                  amount: amount,
-                  category: row.category,
-                  date: new Date(row.date),
-                  username: active_account,
-                  description: row.description,
-              });
-          })
-          .on("end", async () => {
-              if (total_expense > account_balance) {
-                  console.log("Import failed. Total expenses exceed available balance in account");
-                  return;
-              }
+            const date = new Date(row.date);
+            if (isNaN(date.getTime())) {
+              console.log(`Skipping row with invalid date: ${row.date}`);
+              continue;
+            }
 
-              if (expenses.length > 0) {
-                  for (let i = 0; i < expenses.length; i++) {
-                      await addMongoExpense(expenses[i]);
-                      console.log("Expense added successfully!");
-                  }
-              } else {
-                  console.log("No valid expenses found in the file.");
-              }
-              resolve();
-          }) 
-          .on("error", (error: Error) => { 
-              console.log("Error: ", error.message);
-              reject(error);
-          });
+            const amount = parseFloat(row.amount);
+            if (isNaN(amount)) {
+              console.log(`Skipping row with invalid amount: ${row.amount}`);
+              continue;
+            }
+
+            validExpenses.push({
+              amount: amount,
+              category: row.category,
+              date: date,
+              username: active_account,
+              description: row.description
+            });
+
+            totalAmount += amount;
+          }
+
+          if (totalAmount > account.balance) {
+            throw new Error(
+              `Insufficient balance (${account.balance}) for total expenses (${totalAmount})`
+            );
+          }
+
+          for (const expense of validExpenses) {
+            await addMongoExpense(expense);
+          }
+
+          account.balance -= totalAmount;
+          await updateBalance(account.accountOwner, account.balance);
+
+          console.log(`Successfully imported ${validExpenses.length} expenses`);
+          await oncallCheckExpenseLimit();
+          resolve();
+        } catch (error) {
+          if (validExpenses.length > 0) {
+            await Promise.all(
+              validExpenses.map(expense => 
+                deleteExpense(expense.username, expense.date, expense.description)
+            ));
+          }
+          reject(error);
+        }
+      })
+      .on('error', (error: Error) => reject(error));
   });
 }
 /**
@@ -523,49 +568,35 @@ export async function csvparser(inputfile: string) : Promise<void> {
 * @precondition - no preconditions
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
 */
-export async function exportExpenseCsvFile() : Promise<void> {
+export async function exportExpenseCsvFile(): Promise<void> {
   const active_account = await find_active_account();
-  if (active_account === "") {
-      console.log("No user is logged in!");
-      return;
+  if (!active_account) {
+    console.log("No user logged in!");
+    return;
   }
 
   const expenses = await getExpenses(active_account);
-  if (!expenses || expenses.length === 0) {
-      console.log("No expenses found for the active account.");
-      return;
-  }
+  const filename = `${active_account}_expenses_${new Date().toISOString().slice(0,10)}.csv`;
 
-  const filename = `expenses_${active_account}.csv`;
-  const writableStream = fs.createWriteStream(filename);
-
-  const columns = ["amount", "category", "date", "accountOwner", "description"];
-
-  const stringifier = stringify({ header: true, columns });
-
-  stringifier.pipe(writableStream);
-
-  // Add each expense row
-  expenses.forEach(expense => {
-      stringifier.write({
-          amount: expense.amount,
-          category: expense.category,
-          date: expense.date.toISOString().split("T")[0], // Format date as YYYY-MM-DD
-          accountOwner: expense.accountOwner,
-          description: expense.description,
-      });
+  const csvWriter = createCsvWriter({
+    path: filename,
+    header: [
+      { id: 'amount', title: 'Amount' },
+      { id: 'category', title: 'Category' },
+      { id: 'date', title: 'Date' },
+      { id: 'description', title: 'Description' }
+    ]
   });
 
-  // End the stream
-  stringifier.end();
+  const records = expenses!.map(expense => ({
+    amount: expense.amount,
+    category: expense.category,
+    date: expense.date.toISOString().split('T')[0],
+    description: expense.description
+  }));
 
-  writableStream.on("finish", () => {
-      console.log(`Expenses successfully exported to ${filename}`);
-  });
-
-  writableStream.on("error", (error : Error) => {
-      console.error("Error writing to CSV file:", error);
-  });
+  await csvWriter.writeRecords(records);
+  console.log(`Exported ${expenses!.length} expenses to ${filename}`);
 }
 
 /**

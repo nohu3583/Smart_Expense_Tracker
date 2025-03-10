@@ -54,9 +54,6 @@ var readline = require("readline");
 var account_1 = require("../mongodb/account");
 var expense_1 = require("../mongodb/expense");
 var crypto = require("crypto");
-var fs = require("fs");
-var csv_parser_1 = require("csv-parser");
-var sync_1 = require("csv-stringify/sync");
 //helper functions
 /**
  * Helper function to ask the user to choose a valid expense category.
@@ -136,7 +133,7 @@ exports.rl = readline.createInterface({
 * // askquestion("Enter a number: ");
 * // returns Promise<string>
 * @param {string} query - question to ask the user
-* @precondition - no preconditions
+* @precondition - no precondition
 * @returns {Promise<string>} Returns a promise that resolves to the user's answer
 */
 function askQuestion(query) {
@@ -153,7 +150,7 @@ function askQuestion(query) {
 */
 function registerUser() {
     return __awaiter(this, void 0, void 0, function () {
-        var username, password, hashed_password, account_number, balance, currency, account;
+        var username, password, hashed_password, account_number, balance, currency, question, account_limit, account;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -181,20 +178,31 @@ function registerUser() {
                     return [4 /*yield*/, askQuestion("Enter currency: ")];
                 case 7:
                     currency = _a.sent();
+                    return [4 /*yield*/, askQuestion("Do you want to add limit on your account(yes/no)")];
+                case 8:
+                    question = _a.sent();
+                    account_limit = undefined;
+                    if (!(question === "yes")) return [3 /*break*/, 10];
+                    return [4 /*yield*/, askQuestion("What limit on spending should this account have per 30 days(optional)")];
+                case 9:
+                    account_limit = _a.sent();
+                    _a.label = 10;
+                case 10:
                     account = {
                         accountOwner: account_number,
                         balance: parseInt(balance),
                         currency: currency,
                         username: username,
                         password: hashed_password,
-                        loggedIn: false
+                        loggedIn: false,
+                        limit_account: account_limit ? parseFloat(account_limit) : undefined
                     };
                     console.log("Account created successfully!");
                     return [4 /*yield*/, (0, account_1.createAccount)(account)];
-                case 8:
+                case 11:
                     _a.sent();
-                    _a.label = 9;
-                case 9: return [2 /*return*/];
+                    _a.label = 12;
+                case 12: return [2 /*return*/];
             }
         });
     });
@@ -318,25 +326,28 @@ function addExpense() {
                     return [4 /*yield*/, askQuestion("Do you want to add manually or import from CSV? (manual/csv): ")];
                 case 2:
                     question = _a.sent();
-                    if (!(question === "csv")) return [3 /*break*/, 5];
+                    if (!(question === "csv")) return [3 /*break*/, 6];
                     return [4 /*yield*/, askQuestion("Enter the name of the CSV file: ")];
                 case 3:
                     inputfile = _a.sent();
-                    return [4 /*yield*/, csvparser(inputfile)];
+                    return [4 /*yield*/, csvparser()];
                 case 4:
                     _a.sent();
+                    return [4 /*yield*/, oncallCheckExpenseLimit()];
+                case 5:
+                    _a.sent();
                     return [2 /*return*/];
-                case 5: return [4 /*yield*/, askQuestion("Enter amount: ")];
-                case 6:
+                case 6: return [4 /*yield*/, askQuestion("Enter amount: ")];
+                case 7:
                     amount = _a.sent();
                     return [4 /*yield*/, askValidDate("Enter Valid date")];
-                case 7:
+                case 8:
                     date = _a.sent();
                     return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
-                case 8:
+                case 9:
                     categoryName = _a.sent();
                     return [4 /*yield*/, askQuestion("Enter description: ")];
-                case 9:
+                case 10:
                     description = _a.sent();
                     expense = {
                         amount: parseInt(amount),
@@ -346,19 +357,22 @@ function addExpense() {
                         description: description
                     };
                     return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
-                case 10:
+                case 11:
                     _a.sent();
                     console.log("Expense added successfully!");
-                    return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
-                case 11:
-                    account = _a.sent();
-                    if (!account) return [3 /*break*/, 13];
-                    account.balance -= parseInt(amount);
-                    return [4 /*yield*/, (0, account_1.updateBalance)(account.accountOwner, account.balance)];
+                    return [4 /*yield*/, oncallCheckExpenseLimit()];
                 case 12:
                     _a.sent();
-                    _a.label = 13;
-                case 13: return [2 /*return*/];
+                    return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
+                case 13:
+                    account = _a.sent();
+                    if (!account) return [3 /*break*/, 15];
+                    account.balance -= parseInt(amount);
+                    return [4 /*yield*/, (0, account_1.updateBalance)(account.accountOwner, account.balance)];
+                case 14:
+                    _a.sent();
+                    _a.label = 15;
+                case 15: return [2 /*return*/];
             }
         });
     });
@@ -469,7 +483,7 @@ function change_or_delete_expense() {
 */
 function getExpensesForUser() {
     return __awaiter(this, void 0, void 0, function () {
-        var choice, active_account, _a, expenses, categoryName, expenses_category, date, expenses_date, amount, expenses_amount, description, expenses_description;
+        var choice, active_account, _a, expenses, awaits, categoryName, expenses_category, date, expenses_date, amount, expenses_amount, description, expenses_description;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -493,58 +507,61 @@ function getExpensesForUser() {
                     _a = choice;
                     switch (_a) {
                         case "1": return [3 /*break*/, 3];
-                        case "2": return [3 /*break*/, 5];
-                        case "3": return [3 /*break*/, 8];
-                        case "4": return [3 /*break*/, 11];
-                        case "5": return [3 /*break*/, 14];
-                        case "6": return [3 /*break*/, 17];
+                        case "2": return [3 /*break*/, 6];
+                        case "3": return [3 /*break*/, 9];
+                        case "4": return [3 /*break*/, 12];
+                        case "5": return [3 /*break*/, 15];
+                        case "6": return [3 /*break*/, 18];
                     }
-                    return [3 /*break*/, 19];
+                    return [3 /*break*/, 20];
                 case 3: return [4 /*yield*/, (0, expense_1.getExpenses)(active_account)];
                 case 4:
                     expenses = _b.sent();
                     console.log(expenses);
-                    return [3 /*break*/, 20];
-                case 5: return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
-                case 6:
+                    return [4 /*yield*/, askQuestion("press any button to continue")];
+                case 5:
+                    awaits = _b.sent();
+                    _b.label = 6;
+                case 6: return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
+                case 7:
                     categoryName = _b.sent();
                     return [4 /*yield*/, (0, expense_1.getExpensesByCategory)(active_account, categoryName)];
-                case 7:
+                case 8:
                     expenses_category = _b.sent();
                     console.log(expenses_category);
-                    return [3 /*break*/, 20];
-                case 8: return [4 /*yield*/, askValidDate("For which date do you want to see your expenses")];
-                case 9:
+                    return [3 /*break*/, 21];
+                case 9: return [4 /*yield*/, askValidDate("For which date do you want to see your expenses")];
+                case 10:
                     date = _b.sent();
                     return [4 /*yield*/, (0, expense_1.getExpensesByDate)(active_account, date)];
-                case 10:
+                case 11:
                     expenses_date = _b.sent();
                     console.log(expenses_date);
-                    return [3 /*break*/, 20];
-                case 11: return [4 /*yield*/, askQuestion("Enter amount: ")];
-                case 12:
+                    return [3 /*break*/, 21];
+                case 12: return [4 /*yield*/, askQuestion("Enter amount: ")];
+                case 13:
                     amount = _b.sent();
                     return [4 /*yield*/, (0, expense_1.getExpensesByAmount)(active_account, parseInt(amount))];
-                case 13:
+                case 14:
                     expenses_amount = _b.sent();
                     console.log(expenses_amount);
-                    return [3 /*break*/, 20];
-                case 14: return [4 /*yield*/, askQuestion("Enter description: ")];
-                case 15:
+                    return [3 /*break*/, 21];
+                case 15: return [4 /*yield*/, askQuestion("Enter description: ")];
+                case 16:
                     description = _b.sent();
                     return [4 /*yield*/, (0, expense_1.getExpensesByDescription)(active_account, description)];
-                case 16:
+                case 17:
                     expenses_description = _b.sent();
                     console.log(expenses_description);
-                    return [3 /*break*/, 20];
-                case 17: return [4 /*yield*/, exportExpenseCsvFile()];
-                case 18:
-                    _b.sent();
-                    return [3 /*break*/, 20];
+                    return [3 /*break*/, 21];
+                case 18: return [4 /*yield*/, exportExpenseCsvFile()];
                 case 19:
+                    _b.sent();
+                    return [3 /*break*/, 21];
+                case 20:
                     console.log("Invalid option. Try again.");
-                    _b.label = 20;
-                case 20: return [2 /*return*/];
+                    _b.label = 21;
+                case 21: return [2 /*return*/];
             }
         });
     });
@@ -589,12 +606,12 @@ function account_options() {
                     switch (_a) {
                         case "1": return [3 /*break*/, 4];
                         case "2": return [3 /*break*/, 5];
-                        case "3": return [3 /*break*/, 24];
+                        case "3": return [3 /*break*/, 30];
                     }
-                    return [3 /*break*/, 29];
+                    return [3 /*break*/, 35];
                 case 4:
                     console.log(account);
-                    return [3 /*break*/, 30];
+                    return [3 /*break*/, 36];
                 case 5:
                     options = ["1. Account Number", "2. Balance", "3. Currency", "4. Username", "5. Password"];
                     return [4 /*yield*/, askQuestion("What in your account do you want to change? \n" + options.join("\n") + "\nEnter choice: ")];
@@ -612,81 +629,95 @@ function account_options() {
                     switch (_b) {
                         case "1": return [3 /*break*/, 8];
                         case "2": return [3 /*break*/, 10];
-                        case "3": return [3 /*break*/, 13];
-                        case "4": return [3 /*break*/, 16];
-                        case "5": return [3 /*break*/, 18];
+                        case "3": return [3 /*break*/, 15];
+                        case "4": return [3 /*break*/, 18];
+                        case "5": return [3 /*break*/, 20];
+                        case "6": return [3 /*break*/, 22];
                     }
-                    return [3 /*break*/, 20];
+                    return [3 /*break*/, 26];
                 case 8: return [4 /*yield*/, askQuestion("Enter new account number: ")];
                 case 9:
                     value = _c.sent();
                     (0, expense_1.updateallaccountowner)(account.accountOwner, value);
-                    return [3 /*break*/, 21];
-                case 10:
-                    if (!(typeof value === 'string' || isNaN(value))) return [3 /*break*/, 12];
-                    return [4 /*yield*/, askQuestion("Enter new balance: ")];
+                    return [3 /*break*/, 27];
+                case 10: return [4 /*yield*/, askQuestion("Enter new balance: ")];
                 case 11:
                     value = _c.sent();
-                    value = parseFloat(value);
-                    if (isNaN(value)) {
-                        console.log("Balance must be a number. Try again.");
-                    }
-                    return [3 /*break*/, 10];
-                case 12: return [3 /*break*/, 21];
+                    _c.label = 12;
+                case 12:
+                    if (!(isNaN(parseInt(value)) || parseInt(value) < 0)) return [3 /*break*/, 14];
+                    console.log("Balance must be a positive number");
+                    return [4 /*yield*/, askQuestion("Enter new balance: ")];
                 case 13:
-                    if (!(value.length !== 3)) return [3 /*break*/, 15];
+                    value = _c.sent();
+                    return [3 /*break*/, 12];
+                case 14: return [3 /*break*/, 27];
+                case 15:
+                    if (!(value.length !== 3)) return [3 /*break*/, 17];
                     return [4 /*yield*/, askQuestion("Enter new currency: ")];
-                case 14:
+                case 16:
                     value = (_c.sent()).toUpperCase();
                     if (value.length !== 3) {
                         console.log("Currency must be 3 characters long. Try again.");
                     }
-                    return [3 /*break*/, 13];
-                case 15: return [3 /*break*/, 21];
-                case 16: return [4 /*yield*/, askQuestion("Enter new username: ")];
-                case 17:
-                    value = _c.sent();
-                    return [3 /*break*/, 21];
-                case 18: return [4 /*yield*/, askQuestion("Enter new password: ")];
+                    return [3 /*break*/, 15];
+                case 17: return [3 /*break*/, 27];
+                case 18: return [4 /*yield*/, askQuestion("Enter new username: ")];
                 case 19:
                     value = _c.sent();
+                    return [3 /*break*/, 27];
+                case 20: return [4 /*yield*/, askQuestion("Enter new password: ")];
+                case 21:
+                    value = _c.sent();
                     value = crypto.createHash('sha256').update(value).digest("hex");
-                    return [3 /*break*/, 21];
-                case 20:
+                    return [3 /*break*/, 27];
+                case 22: return [4 /*yield*/, askQuestion("Enter new limit for spending: ")];
+                case 23:
+                    value = _c.sent();
+                    _c.label = 24;
+                case 24:
+                    if (!(isNaN(parseInt(value)) || parseInt(value) < 0)) return [3 /*break*/, 26];
+                    console.log("The new account limit must be a positive number");
+                    return [4 /*yield*/, askQuestion("Enter new balance: ")];
+                case 25:
+                    value = _c.sent();
+                    return [3 /*break*/, 24];
+                case 26:
                     console.log("Invalid option. Try again.");
                     return [2 /*return*/];
-                case 21:
+                case 27:
                     fieldNames = {
                         "1": "accountOwner",
                         "2": "balance",
                         "3": "currency",
                         "4": "username",
                         "5": "password",
+                        "6": "limit_account"
                     };
-                    if (!fieldNames[change_to]) return [3 /*break*/, 23];
+                    if (!fieldNames[change_to]) return [3 /*break*/, 29];
                     return [4 /*yield*/, (0, account_1.updates_specific_field)(fieldNames[change_to], active_account, value)];
-                case 22:
+                case 28:
                     _c.sent();
                     console.log("Account updated successfully!");
-                    _c.label = 23;
-                case 23: return [3 /*break*/, 30];
-                case 24: return [4 /*yield*/, askQuestion("Are you sure you want to delete your account? (yes/no): ")];
-                case 25:
+                    _c.label = 29;
+                case 29: return [3 /*break*/, 36];
+                case 30: return [4 /*yield*/, askQuestion("Are you sure you want to delete your account? (yes/no): ")];
+                case 31:
                     confirm_1 = _c.sent();
-                    if (!(confirm_1.toLowerCase() === "yes")) return [3 /*break*/, 28];
+                    if (!(confirm_1.toLowerCase() === "yes")) return [3 /*break*/, 34];
                     return [4 /*yield*/, (0, account_1.deleteAccount)(active_account)];
-                case 26:
+                case 32:
                     _c.sent();
                     console.log("Account deleted successfully!");
                     return [4 /*yield*/, (0, expense_1.deleteallexpense)(active_account)];
-                case 27:
+                case 33:
                     _c.sent();
-                    _c.label = 28;
-                case 28: return [3 /*break*/, 30];
-                case 29:
+                    _c.label = 34;
+                case 34: return [3 /*break*/, 36];
+                case 35:
                     console.log("Invalid option. Try again.");
-                    _c.label = 30;
-                case 30: return [2 /*return*/];
+                    _c.label = 36;
+                case 36: return [2 /*return*/];
             }
         });
     });
@@ -700,7 +731,7 @@ function account_options() {
 function awaitUserInput() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
-            askQuestion("Press enter to continue: ");
+            askQuestion("Press any button to continue: ");
             return [2 /*return*/];
         });
     });
@@ -712,85 +743,11 @@ function awaitUserInput() {
 * @precondition - no preconditions
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
 */
-function csvparser(inputfile) {
+function csvparser() {
     return __awaiter(this, void 0, void 0, function () {
-        var active_account, active_account_info, account_balance, total_expense;
-        var _this = this;
         return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
-                case 1:
-                    active_account = _a.sent();
-                    if (active_account === "") {
-                        console.log("No user is logged in!");
-                        return [2 /*return*/];
-                    }
-                    return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
-                case 2:
-                    active_account_info = _a.sent();
-                    account_balance = active_account_info.balance;
-                    total_expense = 0;
-                    return [2 /*return*/, new Promise(function (resolve, reject) {
-                            var expenses = [];
-                            fs.createReadStream(inputfile)
-                                .pipe((0, csv_parser_1.default)())
-                                .on("data", function (row) {
-                                if (row.username !== active_account) {
-                                    console.log("Error: Account number does not match the active account. Skipping row.");
-                                    return;
-                                }
-                                var amount = parseFloat(row.amount);
-                                if (isNaN(amount) || amount <= 0) {
-                                    console.log("Error: Amount must be a number. Skipping row.");
-                                    return;
-                                }
-                                total_expense += amount;
-                                expenses.push({
-                                    amount: amount,
-                                    category: row.category,
-                                    date: new Date(row.date),
-                                    username: active_account,
-                                    description: row.description,
-                                });
-                            })
-                                .on("end", function () { return __awaiter(_this, void 0, void 0, function () {
-                                var i;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            if (total_expense > account_balance) {
-                                                console.log("Import failed. Total expenses exceed available balance in account");
-                                                return [2 /*return*/];
-                                            }
-                                            if (!(expenses.length > 0)) return [3 /*break*/, 5];
-                                            i = 0;
-                                            _a.label = 1;
-                                        case 1:
-                                            if (!(i < expenses.length)) return [3 /*break*/, 4];
-                                            return [4 /*yield*/, (0, expense_1.addExpense)(expenses[i])];
-                                        case 2:
-                                            _a.sent();
-                                            console.log("Expense added successfully!");
-                                            _a.label = 3;
-                                        case 3:
-                                            i++;
-                                            return [3 /*break*/, 1];
-                                        case 4: return [3 /*break*/, 6];
-                                        case 5:
-                                            console.log("No valid expenses found in the file.");
-                                            _a.label = 6;
-                                        case 6:
-                                            resolve();
-                                            return [2 /*return*/];
-                                    }
-                                });
-                            }); })
-                                .on("error", function (error) {
-                                console.log("Error: ", error.message);
-                                reject(error);
-                            });
-                        })];
-            }
+            console.log("To be implemented");
+            return [2 /*return*/];
         });
     });
 }
@@ -802,37 +759,9 @@ function csvparser(inputfile) {
 */
 function exportExpenseCsvFile() {
     return __awaiter(this, void 0, void 0, function () {
-        var active_account, expenses, filename, writableStream, columns, csvContent;
         return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
-                case 1:
-                    active_account = _a.sent();
-                    if (active_account === "") {
-                        console.log("No user is logged in!");
-                        return [2 /*return*/];
-                    }
-                    return [4 /*yield*/, (0, expense_1.getExpenses)(active_account)];
-                case 2:
-                    expenses = _a.sent();
-                    if (!expenses || expenses.length === 0) {
-                        console.log("No expenses found for the active account.");
-                        return [2 /*return*/];
-                    }
-                    filename = "expenses_".concat(active_account, ".csv");
-                    writableStream = fs.createWriteStream(filename);
-                    columns = ["amount", "category", "date", "accountOwner", "description"];
-                    csvContent = (0, sync_1.stringify)(expenses, { header: true, columns: columns });
-                    writableStream.write(csvContent);
-                    writableStream.end();
-                    writableStream.on("finish", function () {
-                        console.log("Expenses successfully exported to ".concat(filename));
-                    });
-                    writableStream.on("error", function (error) {
-                        console.error("Error writing to CSV file:", error);
-                    });
-                    return [2 /*return*/];
-            }
+            console.log("To be implemented");
+            return [2 /*return*/];
         });
     });
 }

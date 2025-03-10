@@ -1,35 +1,6 @@
-import { createAccount,Account, amount_of_accounts, find_active_account, getAllUsernames} from '../mongodb/account';
-import {rl, askQuestion, registerUser, loginUser, logoutUser,addExpense, change_or_delete_expense, getExpensesForUser, wait, account_options, awaitUserInput} from  '../app/functions';
-import { connectDB } from '../mongodb/database';
-const apiURL = 'http://localhost:3000/api/expense';
+import { createAccount, Account, amount_of_accounts, find_active_account, getAllUsernames } from '../mongodb/account';
+import { rl, askQuestion, registerUser, loginUser, logoutUser, addExpense, change_or_delete_expense, getExpensesForUser, wait, account_options } from '../app/functions';
 
-const sendExpense = async () => {
-  const amountInput = document.getElementById('amount') as HTMLInputElement;
-  const amount = amountInput.value;
-
-  if (!amount) {
-      alert('Please enter an amount.');
-      return;
-  }
-
-  try {
-      const response = await fetch(apiURL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount })
-      });
-
-      const data = await response.json();
-      alert(data.message);
-  } catch (error) {
-      console.error('Error sending expense:', error);
-  }
-};
-
-document.getElementById('submit')?.addEventListener('click', sendExpense);
-
-
-document.getElementById('submit')?.addEventListener('click', sendExpense);
 async function main() {
   while (true) {
     if (await amount_of_accounts() === 0) {
@@ -44,17 +15,18 @@ async function main() {
           break;
         case "2":
           console.log("Goodbye!");
-          rl.close();
+          rl.close(); // Close the readline interface
+          process.exit(0); // Forcefully exit the program
           return;
-        case "3": //used for testing purposes
-          const account : Account = {
-            accountOwner : "123456",
-            balance : 1000,
-            currency : "USD",
-            username : "noahhzr",
-            password : "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", //hashas från 123456
-            loggedIn : true
-          }
+        case "3": // Used for testing purposes
+          const account: Account = {
+            accountOwner: "123456",
+            balance: 1000,
+            currency: "USD",
+            username: "noahhzr",
+            password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", // Hashed password for "123456"
+            loggedIn: true
+          };
           await createAccount(account);
           console.log("Testing account created successfully!");
           break;
@@ -69,7 +41,7 @@ async function main() {
       console.log("\n Smart Expense Tracker");
       console.log("1. Register");
       console.log("2. Login");
-      console.log("3. Display Users")
+      console.log("3. Display Users");
       console.log("4. Add Expense");
       console.log("5. Logout");
       console.log("6. Exit");
@@ -100,7 +72,8 @@ async function main() {
           break;
         case "6":
           console.log("Goodbye!");
-          rl.close();
+          rl.close(); // Close the readline interface
+          process.exit(0); // Forcefully exit the program
           return;
         case "7":
           const what_do_do = await askQuestion("Do you want to change or delete an expense, or view expense? (change/delete/view): ");
@@ -118,11 +91,10 @@ async function main() {
           break;
         default:
           console.log("Invalid option. Try again.");
-
       }
     }
-  await wait(2000);
-  console.clear();
+    await wait(2000);
+    console.clear();
   }
 }
 
