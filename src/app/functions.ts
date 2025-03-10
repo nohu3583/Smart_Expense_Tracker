@@ -1,15 +1,63 @@
 import * as readline from 'readline';
-import { createAccount as createMongoAccount, getAccount, updateBalance, getAccountBalance, getAccountCurrency, Account, amount_of_accounts, find_active_account, deleteAccount, updates_specific_field, switch_logged_in_status} from '../mongodb/account';
+import { createAccount as createMongoAccount, getAccount, updateBalance, Account, find_active_account, deleteAccount, updates_specific_field, switch_logged_in_status} from '../mongodb/account';
 import { addExpense as addMongoExpense, Expense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense,getExpensesByDescription
-    ,updateallaccountowner, deleteallexpense} from '../mongodb/expense';
+    ,updateallaccountowner, deleteallexpense, get_total_expense_account} from '../mongodb/expense';
 import * as crypto from 'crypto';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import { stringify } from "csv-stringify";
 
+//helper functions
 
-// Defining the expense categories
-export const expense_categories = ["1. Food", " 2. Housing", " 3. Transportation", " 4. Health and wellness", " 5. Shopping", " 6. Entertainment", " 7. Other"]
+/**
+ * Helper function to ask the user to choose a valid expense category.
+ * @param {string} prompt - The prompt to display to the user when asking for category selection.
+ * @returns {Promise<string>} - The selected category name (e.g., "Food", "Housing", etc.).
+ */
+async function askCategorySelection(prompt: string): Promise<string> {
+  let category: string;
+  
+  // Display category options
+  const categoryChoices = Object.entries(expense_categories)
+    .map(([key, value]) => `${key}. ${value}`)
+    .join("\n");
+
+  do {
+    category = await askQuestion(`${prompt}\n${categoryChoices}\nEnter choice (only number): `);
+    
+    // Validate the category
+    if (!expense_categories[category]) {
+      console.log("Invalid category. Please enter a number between 1-7.");
+    }
+  } while (!expense_categories[category]);
+  
+  return expense_categories[category]; // Return the valid category name
+}
+
+/**
+ * Helper function to ask the user for a valid date.
+ * Ensures the date entered is in a correct format.
+ * @param {string} prompt - The prompt to display to the user when asking for the date.
+ * @returns {Promise<Date>} - The valid parsed date.
+ */
+async function askValidDate(prompt: string): Promise<Date> {
+  let date: Date;
+  let isValid = false;
+
+  do {
+    const dateStr = await askQuestion(prompt);
+    date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      console.log("Invalid date format. Please try again.");
+    } else {
+      isValid = true;
+    }
+  } while (!isValid);
+  
+  return date;
+}
+
+
 
 // Defining the readline interface
 export const rl = readline.createInterface({
@@ -120,6 +168,17 @@ export async function logoutUser() {
   console.log("User logged out successfully!");
 }
 
+// Defining the expense categories
+
+const expense_categories : Record<string, string>= {
+  "1": "Food",
+  "2": "Housing",
+  "3": "Transportation",
+  "4": "Health and wellness",
+  "5": "Shopping", 
+  "6": "Entertainment",
+  "7": "Other"
+};
 /**
 * Adds a new expense to the database.
 * If no user is logged in, the function will return without adding the expense.
@@ -131,37 +190,26 @@ export async function logoutUser() {
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, no return.
 */
 export async function addExpense() : Promise<void> {
+  const active_account = await find_active_account();
+  if (active_account === "") {
+    console.log("No user is logged in!");
+    return;
+  }
   const question = await askQuestion("Do you want to add manually or import from CSV? (manual/csv): ");
   if (question === "csv") {
     const inputfile = await askQuestion("Enter the name of the CSV file: ");
     await csvparser(inputfile);
     return;
   }
-  const active_account = await find_active_account();
-  if (active_account === "") {
-    console.log("No user is logged in!");
-    return;
-  }
   const amount = await askQuestion("Enter amount: ");
-  const date = await askQuestion("Enter date: ");
-  let date_parsed = new Date(date); // check if date is in correct format
-  while (isNaN(date_parsed.getTime())) {
-    console.log("Invalid date format. Try again.");
-    const date = await askQuestion("Enter date: ");
-    date_parsed = new Date(date);
-  }
-  let category: string = await askQuestion("What category does this fall under? \n" + expense_categories + ":  ");
-  
-  while (1 > parseFloat(category) || parseFloat(category) > 7) {
-    category = await askQuestion("Invalid category. Please enter a number between 1-7.");
-  }
+  const date = await askValidDate("Enter Valid date")
+  const categoryName = await askCategorySelection("What category do you want to change this purchase to be in?");
   const description = await askQuestion("Enter description: ");
-
   const expense : Expense = {
     amount: parseInt(amount),
-    category: category,
-    date: date_parsed,
-    accountOwner: active_account,
+    category: categoryName,
+    date: date,
+    username: active_account,
     description : description
     }
   await addMongoExpense(expense);
@@ -196,7 +244,7 @@ export async function wait(ms: number) : Promise<void> {
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
 */
 
-export async function change_or_delete_expense() {
+export async function change_or_delete_expense() : Promise<void> {
   console.log("Menu for changing or deleting expenses");
   console.log("1. Change expense");
   console.log("2. Delete expense");
@@ -205,29 +253,25 @@ export async function change_or_delete_expense() {
   switch (choice) {
     case "1":
       const description = await askQuestion("Enter description for the expense you want to change: ");
-      const date = await askQuestion("Enter date for the expense you want to change: ");
-      const parsed_date = new Date(date);
+      const date = await askValidDate("Enter date for the purchase you want to change")
       console.log("Expense found, please enter the new details for the expense.");
       const amount = await askQuestion("Enter amount: ");
-      const category = await askQuestion("Enter category: ");
+      const categoryName = await askCategorySelection("What category do you want to change this purchase to be in?");
       const new_description = await askQuestion("Enter new description: ");
-      const new_date = await askQuestion("Enter date: ");
-      const new_date_parsed = new Date(new_date);
-
+      const new_date = await askValidDate("Enter new date")
       const updated_expense : Expense = {
         amount: parseInt(amount),
-        category: category,
-        date: new_date_parsed,
-        accountOwner: active_account,
+        category: categoryName,
+        date: date,
+        username: active_account,
         description: new_description
       }
-      await updateExpense(active_account, parsed_date, description, updated_expense);
+      await updateExpense(active_account, new_date, description, updated_expense);
       break;
     case "2":
-      const date2 = await askQuestion("Enter date for the expense you want to delete: ");
-      const parsed_date2 = new Date(date2);
+      const date2 = await askValidDate("Enter date for the expense you want to delete")
       const description2 = await askQuestion("Enter description for the expense you want to delete: ");
-      await deleteExpense(active_account, parsed_date2, description2);
+      await deleteExpense(active_account, date2, description2);
       break;
     default:
       console.log("Invalid option. Try again.");
@@ -264,14 +308,13 @@ export async function getExpensesForUser() {
       console.log(expenses);
       break;
     case "2":
-      const category = await askQuestion("Enter category: ");
-      const expenses_category = await getExpensesByCategory(active_account, category);
+      const categoryName = await askCategorySelection("What category do you want to change this purchase to be in?");
+      const expenses_category = await getExpensesByCategory(active_account, categoryName);
       console.log(expenses_category);
       break;
     case "3":
-      const date = await askQuestion("Enter date: ");
-      const parsed_date = new Date(date);
-      const expenses_date = await getExpensesByDate(active_account, parsed_date);
+      const date = await askValidDate("For which date do you want to see your expenses")
+      const expenses_date = await getExpensesByDate(active_account, date);
       console.log(expenses_date);
       break;
     case "4":
@@ -335,13 +378,15 @@ export async function account_options() : Promise<void> {
         return;
       }
 
-      let value: any = "temp";
+      let value : string | number = "temp";
       switch (change_to) {
         case "1":
           value = await askQuestion("Enter new account number: ");
+          updateallaccountowner(account.accountOwner, value);
           break;
         case "2":
-          while (isNaN(value)) {
+          while (typeof value === 'string' || isNaN(value)) 
+          {
           value = await askQuestion("Enter new balance: ");
           value = parseFloat(value);
           if (isNaN(value)) {
@@ -369,7 +414,6 @@ export async function account_options() : Promise<void> {
           return;
       }
 
-      // Map numbers to actual field names
       const fieldNames = {
         "1": "accountOwner",
         "2": "balance",
@@ -430,7 +474,7 @@ export async function csvparser(inputfile: string) : Promise<void> {
       fs.createReadStream(inputfile)
           .pipe(csvParser())
           .on("data", (row: Expense) => {
-              if (row.accountOwner !== active_account) {
+              if (row.username !== active_account) {
                   console.log("Error: Account number does not match the active account. Skipping row.");
                   return;
               }
@@ -447,7 +491,7 @@ export async function csvparser(inputfile: string) : Promise<void> {
                   amount: amount,
                   category: row.category,
                   date: new Date(row.date),
-                  accountOwner: active_account,
+                  username: active_account,
                   description: row.description,
               });
           })
@@ -475,7 +519,7 @@ export async function csvparser(inputfile: string) : Promise<void> {
 }
 /**
 * Exports all the expenses for the active user to a csv file.
-* @param {string} inputfile - The file path to the file that should be added
+* @param - no parameter.
 * @precondition - no preconditions
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
 */
@@ -492,16 +536,13 @@ export async function exportExpenseCsvFile() : Promise<void> {
       return;
   }
 
-  // Define CSV file name
   const filename = `expenses_${active_account}.csv`;
   const writableStream = fs.createWriteStream(filename);
 
-  // Define CSV headers
   const columns = ["amount", "category", "date", "accountOwner", "description"];
 
   const stringifier = stringify({ header: true, columns });
 
-  // Pipe CSV data into the writable stream
   stringifier.pipe(writableStream);
 
   // Add each expense row
@@ -526,3 +567,30 @@ export async function exportExpenseCsvFile() : Promise<void> {
       console.error("Error writing to CSV file:", error);
   });
 }
+
+/**
+* A function to check if the user nears the limit set for their account, notifies based on much has been spent.
+* @param - no parameter.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+export async function oncallCheckExpenseLimit(): Promise<void> {
+  const activeAccountUsername = await find_active_account();
+  if (!activeAccountUsername) return;
+
+  const activeAccount = await getAccount(activeAccountUsername);
+  const accountLimit = activeAccount?.limit_account;
+  const totalSpent = await get_total_expense_account(activeAccountUsername);
+
+  if (!accountLimit || !totalSpent) return;
+  const percentUsed = totalSpent / accountLimit;
+
+  if (percentUsed >= 1) {
+    console.log(`Alert: The account limit has been EXCEEDED! Currently at ${percentUsed * 100}% of the max.`);
+  } else if (percentUsed >= 0.75) {
+    console.log(`Warning: The limit is almost reached (${(percentUsed * 100).toFixed(2)}% used).`);
+  } else if (percentUsed >= 0.5) {
+    console.log(`ℹNotice: More than 50% of the limit has been used (${(percentUsed * 100).toFixed(2)}%).`);
+  }
+}
+

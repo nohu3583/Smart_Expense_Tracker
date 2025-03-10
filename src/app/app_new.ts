@@ -111,6 +111,7 @@ async function main() {
           } else {
             console.log("Invalid option. Try again.");
           }
+          break;
         case "8":
           console.clear();
           await account_options();

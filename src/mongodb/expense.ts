@@ -6,32 +6,42 @@ export interface Expense {
   amount: number;
   category: string;
   date: Date;
-  accountOwner: string;
+  username: string;
   description: string;
 }
 
-// Add a new expense
-async function addExpense(expense: Expense) {
+/**
+* Adds a new expense based on user input.
+* @param {Expense} expense - The expense that should be added to the expense database.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes.
+*/
+async function addExpense(expense: Expense) : Promise<void> {
   const db = await connectDB();
   if (!db) return;
   
   const result = await db.collection(COLLECTION_NAME).insertOne(expense);
-  console.log("✅ Expense Added:", result.insertedId);
+  console.log("Expense Added:", result.insertedId);
 }
 
-// Get expenses for an account
-async function getExpenses(accountOwner: string) {
+/**
+* Get one or many expense records based on the given 
+* @param {string} username - The expense should be added to the expense database.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes.
+*/
+async function getExpenses(username: string) {
   const db = await connectDB();
   if (!db) return;
   
-  return db.collection(COLLECTION_NAME).find({ accountOwner }).toArray();
+  return db.collection(COLLECTION_NAME).find({username}).toArray();
 }
 
-async function getExpensesByCategory(accountOwner: string, category: string) {
+async function getExpensesByCategory(username: string, category: string) {
   const db = await connectDB();
     if (!db) return;
 
-    return db.collection(COLLECTION_NAME).find({ accountOwner, category }).toArray();
+    return db.collection(COLLECTION_NAME).find({username, category }).toArray();
 }
 
 async function getExpensesByDate(accountOwner: string, date: Date) {
@@ -86,7 +96,22 @@ async function deleteallexpense(account : string) {
     console.log("All Expenses Deleted");
 }
 
+async function get_total_expense_account(username: string): Promise<number | undefined> {
+  const db = await connectDB();
+  if (!db) return;
+
+  const accounts = await db.collection(COLLECTION_NAME)
+    .find({ username }, { projection: { amount: 1, _id: 0 } }) 
+    .toArray();
+
+  let sum : number = 0;
+  for (let i = 0; i < accounts.length; i++) {
+    sum += accounts[i].amount;
+  }
+
+  return sum; 
+}
+
 
 export {addExpense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense, getExpensesByDescription
-, updateallaccountowner, deleteallexpense
-};
+, updateallaccountowner, deleteallexpense, get_total_expense_account};

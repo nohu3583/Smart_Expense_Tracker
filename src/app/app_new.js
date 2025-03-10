@@ -82,7 +82,7 @@ function main() {
         return __generator(this, function (_c) {
             switch (_c.label) {
                 case 0:
-                    if (!true) return [3 /*break*/, 34];
+                    if (!true) return [3 /*break*/, 35];
                     return [4 /*yield*/, (0, account_1.amount_of_accounts)()];
                 case 1:
                     if (!((_c.sent()) === 0)) return [3 /*break*/, 10];
@@ -125,7 +125,7 @@ function main() {
                 case 8:
                     console.log("Invalid option. Try again.");
                     _c.label = 9;
-                case 9: return [3 /*break*/, 32];
+                case 9: return [3 /*break*/, 33];
                 case 10: return [4 /*yield*/, (0, account_1.find_active_account)()];
                 case 11:
                     active_account = _c.sent();
@@ -153,36 +153,36 @@ function main() {
                         case "5": return [3 /*break*/, 20];
                         case "6": return [3 /*break*/, 22];
                         case "7": return [3 /*break*/, 23];
-                        case "8": return [3 /*break*/, 29];
+                        case "8": return [3 /*break*/, 30];
                     }
-                    return [3 /*break*/, 31];
+                    return [3 /*break*/, 32];
                 case 13:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.registerUser)()];
                 case 14:
                     _c.sent();
-                    return [3 /*break*/, 32];
+                    return [3 /*break*/, 33];
                 case 15:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.loginUser)()];
                 case 16:
                     _c.sent();
-                    return [3 /*break*/, 32];
+                    return [3 /*break*/, 33];
                 case 17:
                     (0, account_1.getAllUsernames)().then(function (usernames) {
                         console.log("Created users are: ".concat(usernames.join(", ")));
                     });
-                    return [3 /*break*/, 32];
+                    return [3 /*break*/, 33];
                 case 18:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.addExpense)()];
                 case 19:
                     _c.sent();
-                    return [3 /*break*/, 32];
+                    return [3 /*break*/, 33];
                 case 20: return [4 /*yield*/, (0, functions_1.logoutUser)()];
                 case 21:
                     _c.sent();
-                    return [3 /*break*/, 32];
+                    return [3 /*break*/, 33];
                 case 22:
                     console.log("Goodbye!");
                     functions_1.rl.close();
@@ -204,21 +204,22 @@ function main() {
                 case 28:
                     console.log("Invalid option. Try again.");
                     _c.label = 29;
-                case 29:
+                case 29: return [3 /*break*/, 33];
+                case 30:
                     console.clear();
                     return [4 /*yield*/, (0, functions_1.account_options)()];
-                case 30:
-                    _c.sent();
-                    return [3 /*break*/, 32];
                 case 31:
+                    _c.sent();
+                    return [3 /*break*/, 33];
+                case 32:
                     console.log("Invalid option. Try again.");
-                    _c.label = 32;
-                case 32: return [4 /*yield*/, (0, functions_1.wait)(2000)];
-                case 33:
+                    _c.label = 33;
+                case 33: return [4 /*yield*/, (0, functions_1.wait)(2000)];
+                case 34:
                     _c.sent();
                     console.clear();
                     return [3 /*break*/, 0];
-                case 34: return [2 /*return*/];
+                case 35: return [2 /*return*/];
             }
         });
     });

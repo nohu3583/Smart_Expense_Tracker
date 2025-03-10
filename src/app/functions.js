@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.rl = exports.expense_categories = void 0;
+exports.rl = void 0;
 exports.askQuestion = askQuestion;
 exports.registerUser = registerUser;
 exports.loginUser = loginUser;
@@ -49,21 +49,108 @@ exports.account_options = account_options;
 exports.awaitUserInput = awaitUserInput;
 exports.csvparser = csvparser;
 exports.exportExpenseCsvFile = exportExpenseCsvFile;
+exports.oncallCheckExpenseLimit = oncallCheckExpenseLimit;
 var readline = require("readline");
 var account_1 = require("../mongodb/account");
 var expense_1 = require("../mongodb/expense");
 var crypto = require("crypto");
-var fs_1 = require("fs");
+var fs = require("fs");
 var csv_parser_1 = require("csv-parser");
-var csv_stringify_1 = require("csv-stringify");
-exports.expense_categories = ["1. Food", " 2. Housing", " 3. Transportation", " 4. Health and wellness", " 5. Shopping", " 6. Entertainment", " 7. Other"];
+var sync_1 = require("csv-stringify/sync");
+//helper functions
+/**
+ * Helper function to ask the user to choose a valid expense category.
+ * @param {string} prompt - The prompt to display to the user when asking for category selection.
+ * @returns {Promise<string>} - The selected category name (e.g., "Food", "Housing", etc.).
+ */
+function askCategorySelection(prompt) {
+    return __awaiter(this, void 0, void 0, function () {
+        var category, categoryChoices;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    categoryChoices = Object.entries(expense_categories)
+                        .map(function (_a) {
+                        var key = _a[0], value = _a[1];
+                        return "".concat(key, ". ").concat(value);
+                    })
+                        .join("\n");
+                    _a.label = 1;
+                case 1: return [4 /*yield*/, askQuestion("".concat(prompt, "\n").concat(categoryChoices, "\nEnter choice (only number): "))];
+                case 2:
+                    category = _a.sent();
+                    // Validate the category
+                    if (!expense_categories[category]) {
+                        console.log("Invalid category. Please enter a number between 1-7.");
+                    }
+                    _a.label = 3;
+                case 3:
+                    if (!expense_categories[category]) return [3 /*break*/, 1];
+                    _a.label = 4;
+                case 4: return [2 /*return*/, expense_categories[category]]; // Return the valid category name
+            }
+        });
+    });
+}
+/**
+ * Helper function to ask the user for a valid date.
+ * Ensures the date entered is in a correct format.
+ * @param {string} prompt - The prompt to display to the user when asking for the date.
+ * @returns {Promise<Date>} - The valid parsed date.
+ */
+function askValidDate(prompt) {
+    return __awaiter(this, void 0, void 0, function () {
+        var date, isValid, dateStr;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    isValid = false;
+                    _a.label = 1;
+                case 1: return [4 /*yield*/, askQuestion(prompt)];
+                case 2:
+                    dateStr = _a.sent();
+                    date = new Date(dateStr);
+                    if (isNaN(date.getTime())) {
+                        console.log("Invalid date format. Please try again.");
+                    }
+                    else {
+                        isValid = true;
+                    }
+                    _a.label = 3;
+                case 3:
+                    if (!isValid) return [3 /*break*/, 1];
+                    _a.label = 4;
+                case 4: return [2 /*return*/, date];
+            }
+        });
+    });
+}
+// Defining the readline interface
 exports.rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
 });
+/**
+* Asks the user a question and returns the answer as a promise.
+* @example
+* // askquestion("Enter a number: ");
+* // returns Promise<string>
+* @param {string} query - question to ask the user
+* @precondition - no preconditions
+* @returns {Promise<string>} Returns a promise that resolves to the user's answer
+*/
 function askQuestion(query) {
     return new Promise(function (resolve) { return exports.rl.question(query, resolve); });
 }
+/**
+* Registers a new user by asking for a username and password.
+* If the username already exists, the function will return without creating a new account.
+* If the username does not exist, the function will ask for an account number, balance, and currency.
+* The function will then create a new account and return.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value, updates the database with the new account
+*/
 function registerUser() {
     return __awaiter(this, void 0, void 0, function () {
         var username, password, hashed_password, account_number, balance, currency, account;
@@ -112,6 +199,16 @@ function registerUser() {
         });
     });
 }
+/**
+* Function to log in a user by asking for a username and password.
+* If the user is already logged in, the function will return without logging in the user.
+* If the user does not exist, the function will return without logging in the user.
+* If the password is incorrect, the function will return without logging in the user.
+* If the user is successfully logged in, the function will update the database and return.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value, updates loggedIn status in the database.
+*/
 function loginUser() {
     return __awaiter(this, void 0, void 0, function () {
         var username, account, password, hashed_password, active_account;
@@ -156,6 +253,12 @@ function loginUser() {
         });
     });
 }
+/**
+* Function to log out a user.
+* If no user is logged in, the function will return without logging out the user.
+* If the user is successfully logged out, the function will update the database and sets loggedIn status to false.
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, no return.
+*/
 function logoutUser() {
     return __awaiter(this, void 0, void 0, function () {
         var active_account, account;
@@ -180,83 +283,92 @@ function logoutUser() {
         });
     });
 }
+// Defining the expense categories
+var expense_categories = {
+    "1": "Food",
+    "2": "Housing",
+    "3": "Transportation",
+    "4": "Health and wellness",
+    "5": "Shopping",
+    "6": "Entertainment",
+    "7": "Other"
+};
+/**
+* Adds a new expense to the database.
+* If no user is logged in, the function will return without adding the expense.
+* The user can choose to add an expense manually or import from a CSV file.
+* If manual, the function will ask for amount, date, category, and description.
+* The function will then add the expense to the database and update the account balance.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, no return.
+*/
 function addExpense() {
     return __awaiter(this, void 0, void 0, function () {
-        var question, inputfile, active_account, amount, date, date_parsed, date_1, category, description, expense, account;
+        var active_account, question, inputfile, amount, date, categoryName, description, expense, account;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, askQuestion("Do you want to add manually or import from CSV? (manual/csv): ")];
+                case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
                 case 1:
-                    question = _a.sent();
-                    if (!(question === "csv")) return [3 /*break*/, 4];
-                    return [4 /*yield*/, askQuestion("Enter the name of the CSV file: ")];
-                case 2:
-                    inputfile = _a.sent();
-                    return [4 /*yield*/, csvparser(inputfile)];
-                case 3:
-                    _a.sent();
-                    return [2 /*return*/];
-                case 4: return [4 /*yield*/, (0, account_1.find_active_account)()];
-                case 5:
                     active_account = _a.sent();
                     if (active_account === "") {
                         console.log("No user is logged in!");
                         return [2 /*return*/];
                     }
-                    return [4 /*yield*/, askQuestion("Enter amount: ")];
+                    return [4 /*yield*/, askQuestion("Do you want to add manually or import from CSV? (manual/csv): ")];
+                case 2:
+                    question = _a.sent();
+                    if (!(question === "csv")) return [3 /*break*/, 5];
+                    return [4 /*yield*/, askQuestion("Enter the name of the CSV file: ")];
+                case 3:
+                    inputfile = _a.sent();
+                    return [4 /*yield*/, csvparser(inputfile)];
+                case 4:
+                    _a.sent();
+                    return [2 /*return*/];
+                case 5: return [4 /*yield*/, askQuestion("Enter amount: ")];
                 case 6:
                     amount = _a.sent();
-                    return [4 /*yield*/, askQuestion("Enter date: ")];
+                    return [4 /*yield*/, askValidDate("Enter Valid date")];
                 case 7:
                     date = _a.sent();
-                    date_parsed = new Date(date);
-                    _a.label = 8;
+                    return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
                 case 8:
-                    if (!isNaN(date_parsed.getTime())) return [3 /*break*/, 10];
-                    console.log("Invalid date format. Try again.");
-                    return [4 /*yield*/, askQuestion("Enter date: ")];
+                    categoryName = _a.sent();
+                    return [4 /*yield*/, askQuestion("Enter description: ")];
                 case 9:
-                    date_1 = _a.sent();
-                    date_parsed = new Date(date_1);
-                    return [3 /*break*/, 8];
-                case 10: return [4 /*yield*/, askQuestion("What category does this fall under? \n" + exports.expense_categories + ":  ")];
-                case 11:
-                    category = _a.sent();
-                    _a.label = 12;
-                case 12:
-                    if (!(1 > parseFloat(category) || parseFloat(category) > 7)) return [3 /*break*/, 14];
-                    return [4 /*yield*/, askQuestion("Invalid category. Please enter a number between 1-7.")];
-                case 13:
-                    category = _a.sent();
-                    return [3 /*break*/, 12];
-                case 14: return [4 /*yield*/, askQuestion("Enter description: ")];
-                case 15:
                     description = _a.sent();
                     expense = {
                         amount: parseInt(amount),
-                        category: category,
-                        date: date_parsed,
-                        accountOwner: active_account,
+                        category: categoryName,
+                        date: date,
+                        username: active_account,
                         description: description
                     };
                     return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
-                case 16:
+                case 10:
                     _a.sent();
                     console.log("Expense added successfully!");
                     return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
-                case 17:
+                case 11:
                     account = _a.sent();
-                    if (!account) return [3 /*break*/, 19];
+                    if (!account) return [3 /*break*/, 13];
                     account.balance -= parseInt(amount);
                     return [4 /*yield*/, (0, account_1.updateBalance)(account.accountOwner, account.balance)];
-                case 18:
+                case 12:
                     _a.sent();
-                    _a.label = 19;
-                case 19: return [2 /*return*/];
+                    _a.label = 13;
+                case 13: return [2 /*return*/];
             }
         });
     });
 }
+/**
+* Function that creates a delay for a specified number of milliseconds.
+* @param {number} ms - number of milliseconds to wait
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 function wait(ms) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -264,9 +376,21 @@ function wait(ms) {
         });
     });
 }
+/**
+* Function to change or delete an expense.
+* If no user is logged in, the function will return without changing or deleting the expense.
+* The user can choose to change or delete an expense.
+* If changing, the function will ask for the description and date of the expense to change, then ask for the new details.
+* The function will then update the expense in the database.
+* If deleting, the function will ask for the date and description of the expense to delete.
+* The function will then delete the expense from the database.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 function change_or_delete_expense() {
     return __awaiter(this, void 0, void 0, function () {
-        var active_account, choice, _a, description, date, parsed_date, amount, category, new_description, new_date, new_date_parsed, updated_expense, date2, parsed_date2, description2;
+        var active_account, choice, _a, description, date, amount, categoryName, new_description, new_date, updated_expense, date2, description2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -288,43 +412,40 @@ function change_or_delete_expense() {
                 case 3: return [4 /*yield*/, askQuestion("Enter description for the expense you want to change: ")];
                 case 4:
                     description = _b.sent();
-                    return [4 /*yield*/, askQuestion("Enter date for the expense you want to change: ")];
+                    return [4 /*yield*/, askValidDate("Enter date for the purchase you want to change")];
                 case 5:
                     date = _b.sent();
-                    parsed_date = new Date(date);
                     console.log("Expense found, please enter the new details for the expense.");
                     return [4 /*yield*/, askQuestion("Enter amount: ")];
                 case 6:
                     amount = _b.sent();
-                    return [4 /*yield*/, askQuestion("Enter category: ")];
+                    return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
                 case 7:
-                    category = _b.sent();
+                    categoryName = _b.sent();
                     return [4 /*yield*/, askQuestion("Enter new description: ")];
                 case 8:
                     new_description = _b.sent();
-                    return [4 /*yield*/, askQuestion("Enter date: ")];
+                    return [4 /*yield*/, askValidDate("Enter new date")];
                 case 9:
                     new_date = _b.sent();
-                    new_date_parsed = new Date(new_date);
                     updated_expense = {
                         amount: parseInt(amount),
-                        category: category,
-                        date: new_date_parsed,
-                        accountOwner: active_account,
+                        category: categoryName,
+                        date: date,
+                        username: active_account,
                         description: new_description
                     };
-                    return [4 /*yield*/, (0, expense_1.updateExpense)(active_account, parsed_date, description, updated_expense)];
+                    return [4 /*yield*/, (0, expense_1.updateExpense)(active_account, new_date, description, updated_expense)];
                 case 10:
                     _b.sent();
                     return [3 /*break*/, 16];
-                case 11: return [4 /*yield*/, askQuestion("Enter date for the expense you want to delete: ")];
+                case 11: return [4 /*yield*/, askValidDate("Enter date for the expense you want to delete")];
                 case 12:
                     date2 = _b.sent();
-                    parsed_date2 = new Date(date2);
                     return [4 /*yield*/, askQuestion("Enter description for the expense you want to delete: ")];
                 case 13:
                     description2 = _b.sent();
-                    return [4 /*yield*/, (0, expense_1.deleteExpense)(active_account, parsed_date2, description2)];
+                    return [4 /*yield*/, (0, expense_1.deleteExpense)(active_account, date2, description2)];
                 case 14:
                     _b.sent();
                     return [3 /*break*/, 16];
@@ -336,9 +457,19 @@ function change_or_delete_expense() {
         });
     });
 }
+/**
+* Function to get expenses for a user.
+* If no user is logged in, the function will return without getting the expenses.
+* The user can choose to get all expenses, expenses by category, date, amount, or description.
+* The function will then display the expenses based on the user's choice.
+* The user can also export the expenses to a CSV file.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 function getExpensesForUser() {
     return __awaiter(this, void 0, void 0, function () {
-        var choice, active_account, _a, expenses, category, expenses_category, date, parsed_date, expenses_date, amount, expenses_amount, description, expenses_description;
+        var choice, active_account, _a, expenses, categoryName, expenses_category, date, expenses_date, amount, expenses_amount, description, expenses_description;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -374,19 +505,18 @@ function getExpensesForUser() {
                     expenses = _b.sent();
                     console.log(expenses);
                     return [3 /*break*/, 20];
-                case 5: return [4 /*yield*/, askQuestion("Enter category: ")];
+                case 5: return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
                 case 6:
-                    category = _b.sent();
-                    return [4 /*yield*/, (0, expense_1.getExpensesByCategory)(active_account, category)];
+                    categoryName = _b.sent();
+                    return [4 /*yield*/, (0, expense_1.getExpensesByCategory)(active_account, categoryName)];
                 case 7:
                     expenses_category = _b.sent();
                     console.log(expenses_category);
                     return [3 /*break*/, 20];
-                case 8: return [4 /*yield*/, askQuestion("Enter date: ")];
+                case 8: return [4 /*yield*/, askValidDate("For which date do you want to see your expenses")];
                 case 9:
                     date = _b.sent();
-                    parsed_date = new Date(date);
-                    return [4 /*yield*/, (0, expense_1.getExpensesByDate)(active_account, parsed_date)];
+                    return [4 /*yield*/, (0, expense_1.getExpensesByDate)(active_account, date)];
                 case 10:
                     expenses_date = _b.sent();
                     console.log(expenses_date);
@@ -419,6 +549,15 @@ function getExpensesForUser() {
         });
     });
 }
+/**
+* Function for account options.
+* If no user is logged in, the function will return without displaying the account options.
+* The user can choose to get account information, change account information, or delete the account.
+* The function will then display the account information, change the account information, or delete the account based on the user's choice.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 function account_options() {
     return __awaiter(this, void 0, void 0, function () {
         var choice, active_account, account, _a, options, change_to, account_to_be_changed, value, _b, fieldNames, confirm_1;
@@ -481,9 +620,10 @@ function account_options() {
                 case 8: return [4 /*yield*/, askQuestion("Enter new account number: ")];
                 case 9:
                     value = _c.sent();
+                    (0, expense_1.updateallaccountowner)(account.accountOwner, value);
                     return [3 /*break*/, 21];
                 case 10:
-                    if (!isNaN(value)) return [3 /*break*/, 12];
+                    if (!(typeof value === 'string' || isNaN(value))) return [3 /*break*/, 12];
                     return [4 /*yield*/, askQuestion("Enter new balance: ")];
                 case 11:
                     value = _c.sent();
@@ -551,6 +691,12 @@ function account_options() {
         });
     });
 }
+/**
+* Simple function that uses askquestion to wait for an input to continue.
+* @param - no parameters
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 function awaitUserInput() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -559,6 +705,13 @@ function awaitUserInput() {
         });
     });
 }
+/**
+* Function that takes a csv file as input, the file is expenses that we want to add to expense database.
+* If there are problems in the file nothing will happen. But if there are no problems the expense database and also the account balace will be updated.
+* @param {string} inputfile - The file path to the file that should be added
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 function csvparser(inputfile) {
     return __awaiter(this, void 0, void 0, function () {
         var active_account, active_account_info, account_balance, total_expense;
@@ -579,10 +732,10 @@ function csvparser(inputfile) {
                     total_expense = 0;
                     return [2 /*return*/, new Promise(function (resolve, reject) {
                             var expenses = [];
-                            fs_1.default.createReadStream(inputfile)
+                            fs.createReadStream(inputfile)
                                 .pipe((0, csv_parser_1.default)())
                                 .on("data", function (row) {
-                                if (row.accountOwner !== active_account) {
+                                if (row.username !== active_account) {
                                     console.log("Error: Account number does not match the active account. Skipping row.");
                                     return;
                                 }
@@ -596,7 +749,7 @@ function csvparser(inputfile) {
                                     amount: amount,
                                     category: row.category,
                                     date: new Date(row.date),
-                                    accountOwner: active_account,
+                                    username: active_account,
                                     description: row.description,
                                 });
                             })
@@ -641,9 +794,15 @@ function csvparser(inputfile) {
         });
     });
 }
+/**
+* Exports all the expenses for the active user to a csv file.
+* @param - no parameter.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
 function exportExpenseCsvFile() {
     return __awaiter(this, void 0, void 0, function () {
-        var active_account, expenses, filename, writableStream, columns, stringifier;
+        var active_account, expenses, filename, writableStream, columns, csvContent;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
@@ -661,29 +820,57 @@ function exportExpenseCsvFile() {
                         return [2 /*return*/];
                     }
                     filename = "expenses_".concat(active_account, ".csv");
-                    writableStream = fs_1.default.createWriteStream(filename);
+                    writableStream = fs.createWriteStream(filename);
                     columns = ["amount", "category", "date", "accountOwner", "description"];
-                    stringifier = (0, csv_stringify_1.stringify)({ header: true, columns: columns });
-                    // Pipe CSV data into the writable stream
-                    stringifier.pipe(writableStream);
-                    // Add each expense row
-                    expenses.forEach(function (expense) {
-                        stringifier.write({
-                            amount: expense.amount,
-                            category: expense.category,
-                            date: expense.date.toISOString().split("T")[0], // Format date as YYYY-MM-DD
-                            accountOwner: expense.accountOwner,
-                            description: expense.description,
-                        });
-                    });
-                    // End the stream
-                    stringifier.end();
+                    csvContent = (0, sync_1.stringify)(expenses, { header: true, columns: columns });
+                    writableStream.write(csvContent);
+                    writableStream.end();
                     writableStream.on("finish", function () {
                         console.log("Expenses successfully exported to ".concat(filename));
                     });
                     writableStream.on("error", function (error) {
                         console.error("Error writing to CSV file:", error);
                     });
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+/**
+* A function to check if the user nears the limit set for their account, notifies based on much has been spent.
+* @param - no parameter.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+function oncallCheckExpenseLimit() {
+    return __awaiter(this, void 0, void 0, function () {
+        var activeAccountUsername, activeAccount, accountLimit, totalSpent, percentUsed;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
+                case 1:
+                    activeAccountUsername = _a.sent();
+                    if (!activeAccountUsername)
+                        return [2 /*return*/];
+                    return [4 /*yield*/, (0, account_1.getAccount)(activeAccountUsername)];
+                case 2:
+                    activeAccount = _a.sent();
+                    accountLimit = activeAccount === null || activeAccount === void 0 ? void 0 : activeAccount.limit_account;
+                    return [4 /*yield*/, (0, expense_1.get_total_expense_account)(activeAccountUsername)];
+                case 3:
+                    totalSpent = _a.sent();
+                    if (!accountLimit || !totalSpent)
+                        return [2 /*return*/];
+                    percentUsed = totalSpent / accountLimit;
+                    if (percentUsed >= 1) {
+                        console.log("Alert: The account limit has been EXCEEDED! Currently at ".concat(percentUsed * 100, "% of the max."));
+                    }
+                    else if (percentUsed >= 0.75) {
+                        console.log("Warning: The limit is almost reached (".concat((percentUsed * 100).toFixed(2), "% used)."));
+                    }
+                    else if (percentUsed >= 0.5) {
+                        console.log("\u2139Notice: More than 50% of the limit has been used (".concat((percentUsed * 100).toFixed(2), "%)."));
+                    }
                     return [2 /*return*/];
             }
         });
