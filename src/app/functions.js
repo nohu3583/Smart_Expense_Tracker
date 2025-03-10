@@ -54,6 +54,9 @@ var readline = require("readline");
 var account_1 = require("../mongodb/account");
 var expense_1 = require("../mongodb/expense");
 var crypto = require("crypto");
+var fs = require("fs");
+var csv_parser_1 = require("csv-parser");
+var csv_writer_1 = require("csv-writer");
 //helper functions
 /**
  * Helper function to ask the user to choose a valid expense category.
@@ -330,7 +333,7 @@ function addExpense() {
                     return [4 /*yield*/, askQuestion("Enter the name of the CSV file: ")];
                 case 3:
                     inputfile = _a.sent();
-                    return [4 /*yield*/, csvparser()];
+                    return [4 /*yield*/, csvparser(inputfile)];
                 case 4:
                     _a.sent();
                     return [4 /*yield*/, oncallCheckExpenseLimit()];
@@ -743,11 +746,117 @@ function awaitUserInput() {
 * @precondition - no preconditions
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
 */
-function csvparser() {
+function csvparser(inputfile) {
     return __awaiter(this, void 0, void 0, function () {
+        var active_account, account, results, validExpenses;
+        var _this = this;
         return __generator(this, function (_a) {
-            console.log("To be implemented");
-            return [2 /*return*/];
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
+                case 1:
+                    active_account = _a.sent();
+                    if (!active_account) {
+                        console.log("No user logged in!");
+                        return [2 /*return*/];
+                    }
+                    return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
+                case 2:
+                    account = _a.sent();
+                    if (!account) {
+                        console.log("Account not found!");
+                        return [2 /*return*/];
+                    }
+                    results = [];
+                    validExpenses = [];
+                    return [2 /*return*/, new Promise(function (resolve, reject) {
+                            fs.createReadStream(inputfile)
+                                .pipe((0, csv_parser_1.default)())
+                                .on('data', function (data) { return results.push(data); })
+                                .on('end', function () { return __awaiter(_this, void 0, void 0, function () {
+                                var totalAmount, _loop_1, _i, results_1, row, _a, validExpenses_1, expense, error_1;
+                                return __generator(this, function (_b) {
+                                    switch (_b.label) {
+                                        case 0:
+                                            _b.trys.push([0, 7, , 10]);
+                                            totalAmount = 0;
+                                            _loop_1 = function (row) {
+                                                if (!row.amount || !row.date || !row.category || !row.description) {
+                                                    console.log("Skipping invalid row: ".concat(JSON.stringify(row)));
+                                                    return "continue";
+                                                }
+                                                var categoryKey = Object.keys(expense_categories).find(function (key) { return expense_categories[key] === row.category; });
+                                                if (!categoryKey) {
+                                                    console.log("Skipping row with invalid category: ".concat(row.category));
+                                                    return "continue";
+                                                }
+                                                var date = new Date(row.date);
+                                                if (isNaN(date.getTime())) {
+                                                    console.log("Skipping row with invalid date: ".concat(row.date));
+                                                    return "continue";
+                                                }
+                                                var amount = parseFloat(row.amount);
+                                                if (isNaN(amount)) {
+                                                    console.log("Skipping row with invalid amount: ".concat(row.amount));
+                                                    return "continue";
+                                                }
+                                                validExpenses.push({
+                                                    amount: amount,
+                                                    category: row.category,
+                                                    date: date,
+                                                    username: active_account,
+                                                    description: row.description
+                                                });
+                                                totalAmount += amount;
+                                            };
+                                            for (_i = 0, results_1 = results; _i < results_1.length; _i++) {
+                                                row = results_1[_i];
+                                                _loop_1(row);
+                                            }
+                                            if (totalAmount > account.balance) {
+                                                throw new Error("Insufficient balance (".concat(account.balance, ") for total expenses (").concat(totalAmount, ")"));
+                                            }
+                                            _a = 0, validExpenses_1 = validExpenses;
+                                            _b.label = 1;
+                                        case 1:
+                                            if (!(_a < validExpenses_1.length)) return [3 /*break*/, 4];
+                                            expense = validExpenses_1[_a];
+                                            return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
+                                        case 2:
+                                            _b.sent();
+                                            _b.label = 3;
+                                        case 3:
+                                            _a++;
+                                            return [3 /*break*/, 1];
+                                        case 4:
+                                            account.balance -= totalAmount;
+                                            return [4 /*yield*/, (0, account_1.updateBalance)(account.accountOwner, account.balance)];
+                                        case 5:
+                                            _b.sent();
+                                            console.log("Successfully imported ".concat(validExpenses.length, " expenses"));
+                                            return [4 /*yield*/, oncallCheckExpenseLimit()];
+                                        case 6:
+                                            _b.sent();
+                                            resolve();
+                                            return [3 /*break*/, 10];
+                                        case 7:
+                                            error_1 = _b.sent();
+                                            if (!(validExpenses.length > 0)) return [3 /*break*/, 9];
+                                            return [4 /*yield*/, Promise.all(validExpenses.map(function (expense) {
+                                                    return (0, expense_1.deleteExpense)(expense.username, expense.date, expense.description);
+                                                }))];
+                                        case 8:
+                                            _b.sent();
+                                            _b.label = 9;
+                                        case 9:
+                                            reject(error_1);
+                                            return [3 /*break*/, 10];
+                                        case 10: return [2 /*return*/];
+                                    }
+                                });
+                            }); })
+                                .on('error', function (error) { return reject(error); });
+                        })];
+            }
         });
     });
 }
@@ -759,9 +868,41 @@ function csvparser() {
 */
 function exportExpenseCsvFile() {
     return __awaiter(this, void 0, void 0, function () {
+        var active_account, expenses, filename, csvWriter, records;
         return __generator(this, function (_a) {
-            console.log("To be implemented");
-            return [2 /*return*/];
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
+                case 1:
+                    active_account = _a.sent();
+                    if (!active_account) {
+                        console.log("No user logged in!");
+                        return [2 /*return*/];
+                    }
+                    return [4 /*yield*/, (0, expense_1.getExpenses)(active_account)];
+                case 2:
+                    expenses = _a.sent();
+                    filename = "".concat(active_account, "_expenses_").concat(new Date().toISOString().slice(0, 10), ".csv");
+                    csvWriter = (0, csv_writer_1.createObjectCsvWriter)({
+                        path: filename,
+                        header: [
+                            { id: 'amount', title: 'Amount' },
+                            { id: 'category', title: 'Category' },
+                            { id: 'date', title: 'Date' },
+                            { id: 'description', title: 'Description' }
+                        ]
+                    });
+                    records = expenses.map(function (expense) { return ({
+                        amount: expense.amount,
+                        category: expense.category,
+                        date: expense.date.toISOString().split('T')[0],
+                        description: expense.description
+                    }); });
+                    return [4 /*yield*/, csvWriter.writeRecords(records)];
+                case 3:
+                    _a.sent();
+                    console.log("Exported ".concat(expenses.length, " expenses to ").concat(filename));
+                    return [2 /*return*/];
+            }
         });
     });
 }

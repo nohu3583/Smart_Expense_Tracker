@@ -408,6 +408,7 @@ export async function account_options() : Promise<void> {
           break;
         case "4":
           value = await askQuestion("Enter new username: ");
+          await updateallaccountowner(account_to_be_changed.password, value);
           break;
         case "5":
           value = await askQuestion("Enter new password: ");
@@ -604,7 +605,7 @@ export async function exportExpenseCsvFile(): Promise<void> {
 * @param - no parameter.
 * @precondition - no preconditions
 * @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
-*/
+*/                    
 export async function oncallCheckExpenseLimit(): Promise<void> {
   const activeAccountUsername = await find_active_account();
   if (!activeAccountUsername) return;

@@ -45,7 +45,7 @@ exports.find_active_account = find_active_account;
 exports.getAllUsernames = getAllUsernames;
 exports.switch_logged_in_status = switch_logged_in_status;
 exports.updates_specific_field = updates_specific_field;
-var database_1 = require("./database");
+var database_js_1 = require("./database.js");
 var COLLECTION_NAME = "Account";
 /**
 * Creates a new account in the mongodb account database.
@@ -58,7 +58,7 @@ function createAccount(account) {
         var db, result;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
@@ -85,7 +85,7 @@ function getAccount(username) {
         var db;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
@@ -110,7 +110,7 @@ function updateBalance(username, amount) {
         var db;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
@@ -136,7 +136,7 @@ function deleteAccount(username) {
         var db;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
@@ -161,7 +161,7 @@ function amount_of_accounts() {
         var db, accounts;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
@@ -188,7 +188,7 @@ function find_active_account() {
         var db, account;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
@@ -215,7 +215,7 @@ function getAllUsernames() {
         var db, accounts;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
@@ -245,7 +245,7 @@ function updates_specific_field(fieldName, account, value) {
         var _a;
         return __generator(this, function (_b) {
             switch (_b.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _b.sent();
                     if (!db)
@@ -267,7 +267,7 @@ function switch_logged_in_status(username) {
         var db, account, status;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 0: return [4 /*yield*/, (0, database_js_1.connectDB)()];
                 case 1:
                     db = _a.sent();
                     if (!db)
