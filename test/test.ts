@@ -146,29 +146,33 @@ test("Testing that the delete all expense function works, length should be 0 aft
 });
 
 test("Updating a expense", async () => {
-    const expense_to_be_changed : Expense = { //Create a new expense to change
+    const expense_to_be_changed: Expense = {
         amount: 2000,
         category: "Bank",
-        currency : "SEK",
+        currency: "SEK",
         date: new Date(2020, 0, 1),
         username: "bombaclat",
         description: "Investering start av år"
-        }
-    await addExpense(expense_to_be_changed);
-    const changed_expense : Expense = { //Create a new expense to change
+      };
+  
+      await addExpense(expense_to_be_changed);
+  
+      const changed_expense: Expense = {
         amount: 4000,
         category: "Bank",
-        currency : "SEK",
+        currency: "SEK",
         date: new Date(2020, 0, 1),
         username: "bombaclat",
         description: "Investering start av år, skrev in fel antal till att starta med"
-        }
-    await updateExpense(expense_to_be_changed.username, expense_to_be_changed.date, expense_to_be_changed.description, changed_expense);
-    const updated = await getExpenses("bombaclat");
-    console.log(updated);
-    expect(updated![0].amount).toStrictEqual(4000); //Se if first change is registered
-    expect(updated![0].description).toStrictEqual("Investering start av år, skrev in fel antal till att starta med");
-});
+      };
+  
+      await updateExpense("bombaclat", new Date(2020, 0, 1), "Investering start av år", changed_expense);
+      const updated = await getExpenses("bombaclat");
+  
+      console.log(updated);
+      expect(updated![0].description).toStrictEqual("Investering start av år, skrev in fel antal till att starta med");
+      expect(updated![0].amount).toStrictEqual(4000);
+  });
 
 test("Adding upp total amount spent on all expenses in an account", async () => {
     //Creating multiple more expenses to see if it works
@@ -202,7 +206,7 @@ test("Adding upp total amount spent on all expenses in an account", async () => 
     await addExpense(expense6);
 
     const sum = await get_total_expense_account("bombaclat");
-    expect(sum).toStrictEqual(2550);
+    expect(sum).toStrictEqual(4550);
 })
 
 test("Test that updateallusername function works, ie changes username for all expenses connected to that username", async ()=> {

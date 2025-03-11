@@ -108,22 +108,27 @@ async function deleteExpense(username: string, date: Date, description: string):
   }
 }
 
-async function updateExpense(username_input : string , date : Date, description : string,  new_expense: Expense) {  
+async function updateExpense(username_input: string, date: Date, description: string, new_expense: Expense) {
   const db = await connectDB();
-    if (!db) return;
-    
-    await db.collection(COLLECTION_NAME).updateOne(
-      {username_input,  date: date.getTime(), description},
-      { 
-          $set: { 
-              username: new_expense.username, 
-              amount: new_expense.amount, 
-              category: new_expense.category,
-              date: new_expense.date, 
-              description: new_expense.description
-          } 
-      }
+  if (!db) return;
+
+  // Ensure the date has no time component
+  const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+
+  console.log("Updating expense with:", { username: username_input, date: date.toISOString(), description });
+  console.log("New expense data:", new_expense);
+
+  const result = await db.collection(COLLECTION_NAME).updateOne(
+    { username: username_input, date: { $gte: startOfDay, $lte: endOfDay }, description },
+    { $set: new_expense }
   );
+
+  if (result.matchedCount === 0) {
+    console.log("No matching expense found to update.");
+  } else {
+    console.log("Expense updated successfully.");
+  }
 }
 async function updateallusername(old_username_input : string, new_username_input : string) {
   const db = await connectDB();

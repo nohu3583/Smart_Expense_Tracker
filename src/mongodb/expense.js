@@ -205,7 +205,7 @@ function deleteExpense(username, date, description) {
 }
 function updateExpense(username_input, date, description, new_expense) {
     return __awaiter(this, void 0, void 0, function () {
-        var db;
+        var db, startOfDay, endOfDay, result;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
@@ -213,17 +213,19 @@ function updateExpense(username_input, date, description, new_expense) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ username_input: username_input, date: date.getTime(), description: description }, {
-                            $set: {
-                                username: new_expense.username,
-                                amount: new_expense.amount,
-                                category: new_expense.category,
-                                date: new_expense.date,
-                                description: new_expense.description
-                            }
-                        })];
+                    startOfDay = new Date(date.setHours(0, 0, 0, 0));
+                    endOfDay = new Date(date.setHours(23, 59, 59, 999));
+                    console.log("Updating expense with:", { username: username_input, date: date.toISOString(), description: description });
+                    console.log("New expense data:", new_expense);
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ username: username_input, date: { $gte: startOfDay, $lte: endOfDay }, description: description }, { $set: new_expense })];
                 case 2:
-                    _a.sent();
+                    result = _a.sent();
+                    if (result.matchedCount === 0) {
+                        console.log("No matching expense found to update.");
+                    }
+                    else {
+                        console.log("Expense updated successfully.");
+                    }
                     return [2 /*return*/];
             }
         });
