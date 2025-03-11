@@ -68,7 +68,8 @@ function main() {
                     return [3 /*break*/, 9];
                 case 5:
                     console.log("Goodbye!");
-                    functions_1.rl.close();
+                    functions_1.rl.close(); // Close the readline interface
+                    process.exit(0); // Forcefully exit the program
                     return [2 /*return*/];
                 case 6:
                     account = {
@@ -76,7 +77,7 @@ function main() {
                         balance: 1000,
                         currency: "USD",
                         username: "noahhzr",
-                        password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", //hashas från 123456
+                        password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92", // Hashed password for "123456"
                         loggedIn: true
                     };
                     return [4 /*yield*/, (0, account_1.createAccount)(account)];
@@ -147,7 +148,8 @@ function main() {
                     return [3 /*break*/, 33];
                 case 22:
                     console.log("Goodbye!");
-                    functions_1.rl.close();
+                    functions_1.rl.close(); // Close the readline interface
+                    process.exit(0); // Forcefully exit the program
                     return [2 /*return*/];
                 case 23: return [4 /*yield*/, (0, functions_1.askQuestion)("Do you want to change or delete an expense, or view expense? (change/delete/view): ")];
                 case 24:

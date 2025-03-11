@@ -50,12 +50,13 @@ exports.awaitUserInput = awaitUserInput;
 exports.csvparser = csvparser;
 exports.exportExpenseCsvFile = exportExpenseCsvFile;
 exports.oncallCheckExpenseLimit = oncallCheckExpenseLimit;
+exports.fetchExchangeRate = fetchExchangeRate;
 var readline = require("readline");
 var account_1 = require("../mongodb/account");
 var expense_1 = require("../mongodb/expense");
 var crypto = require("crypto");
 var fs = require("fs");
-var csv_parser_1 = require("csv-parser");
+var csv = require("csv-parser");
 var csv_writer_1 = require("csv-writer");
 //helper functions
 /**
@@ -100,26 +101,29 @@ function askCategorySelection(prompt) {
  */
 function askValidDate(prompt) {
     return __awaiter(this, void 0, void 0, function () {
-        var date, isValid, dateStr;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        var date, isValid, dateStr, normalizedDateStr, _a, year, month, day, adjustedMonth;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
                     isValid = false;
-                    _a.label = 1;
+                    _b.label = 1;
                 case 1: return [4 /*yield*/, askQuestion(prompt)];
                 case 2:
-                    dateStr = _a.sent();
-                    date = new Date(dateStr);
+                    dateStr = _b.sent();
+                    normalizedDateStr = dateStr.replace(/\//g, '-');
+                    _a = normalizedDateStr.split('-').map(Number), year = _a[0], month = _a[1], day = _a[2];
+                    adjustedMonth = month - 1;
+                    date = new Date(year, adjustedMonth, day);
                     if (isNaN(date.getTime())) {
-                        console.log("Invalid date format. Please try again.");
+                        console.log("Invalid date format. Please try again (expected format: YYYY/MM/DD).");
                     }
                     else {
                         isValid = true;
                     }
-                    _a.label = 3;
+                    _b.label = 3;
                 case 3:
                     if (!isValid) return [3 /*break*/, 1];
-                    _a.label = 4;
+                    _b.label = 4;
                 case 4: return [2 /*return*/, date];
             }
         });
@@ -304,6 +308,9 @@ var expense_categories = {
     "6": "Entertainment",
     "7": "Other"
 };
+var currencyCodes = [
+    "AFA", "ALL", "DZD", "AOA", "ARS", "AMD", "AWG", "AUD", "AZN", "BSD", "BHD", "BDT", "BBD", "BYR", "BEF", "BZD", "BMD", "BTN", "BTC", "BOB", "BAM", "BWP", "BRL", "GBP", "BND", "BGN", "BIF", "KHR", "CAD", "CVE", "KYD", "XOF", "XAF", "XPF", "CLP", "CLF", "CNY", "COP", "KMF", "CDF", "CRC", "HRK", "CUC", "CZK", "DKK", "DJF", "DOP", "XCD", "EGP", "ERN", "EEK", "ETB", "EUR", "FKP", "FJD", "GMD", "GEL", "DEM", "GHS", "GIP", "GRD", "GTQ", "GNF", "GYD", "HTG", "HNL", "HKD", "HUF", "ISK", "INR", "IDR", "IRR", "IQD", "ILS", "ITL", "JMD", "JPY", "JOD", "KZT", "KES", "KWD", "KGS", "LAK", "LVL", "LBP", "LSL", "LRD", "LYD", "LTC", "LTL", "MOP", "MKD", "MGA", "MWK", "MYR", "MVR", "MRO", "MUR", "MXN", "MDL", "MNT", "MAD", "MZM", "MMK", "NAD", "NPR", "ANG", "TWD", "NZD", "NIO", "NGN", "KPW", "NOK", "OMR", "PKR", "PAB", "PGK", "PYG", "PEN", "PHP", "PLN", "QAR", "RON", "RUB", "RWF", "SVC", "WST", "STD", "SAR", "RSD", "SCR", "SLL", "SGD", "SKK", "SBD", "SOS", "ZAR", "KRW", "SSP", "XDR", "LKR", "SHP", "SDG", "SRD", "SZL", "SEK", "CHF", "SYP", "TJS", "TZS", "THB", "TOP", "TTD", "TND", "TRY", "TMT", "UGX", "UAH", "AED", "UYU", "USD", "UZS", "VUV", "VEF", "VND", "YER", "ZMK", "ZWL"
+];
 /**
 * Adds a new expense to the database.
 * If no user is logged in, the function will return without adding the expense.
@@ -316,7 +323,7 @@ var expense_categories = {
 */
 function addExpense() {
     return __awaiter(this, void 0, void 0, function () {
-        var active_account, question, inputfile, amount, date, categoryName, description, expense, account;
+        var active_account, question, inputfile, amount, date, categoryName, description, currency, converted_amount, account, exchangerate, error_1, expense, amount_change;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
@@ -330,7 +337,7 @@ function addExpense() {
                 case 2:
                     question = _a.sent();
                     if (!(question === "csv")) return [3 /*break*/, 6];
-                    return [4 /*yield*/, askQuestion("Enter the name of the CSV file: ")];
+                    return [4 /*yield*/, askQuestion("Enter the file of path of your csv file: ")];
                 case 3:
                     inputfile = _a.sent();
                     return [4 /*yield*/, csvparser(inputfile)];
@@ -343,7 +350,7 @@ function addExpense() {
                 case 6: return [4 /*yield*/, askQuestion("Enter amount: ")];
                 case 7:
                     amount = _a.sent();
-                    return [4 /*yield*/, askValidDate("Enter Valid date")];
+                    return [4 /*yield*/, askValidDate("Enter Valid date, Format is YYYY/MM/DD :")];
                 case 8:
                     date = _a.sent();
                     return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
@@ -352,30 +359,60 @@ function addExpense() {
                     return [4 /*yield*/, askQuestion("Enter description: ")];
                 case 10:
                     description = _a.sent();
+                    return [4 /*yield*/, askQuestion("Enter the currency for this purchase")];
+                case 11:
+                    currency = (_a.sent()).toUpperCase();
+                    _a.label = 12;
+                case 12:
+                    if (!!currencyCodes.includes(currency)) return [3 /*break*/, 14];
+                    console.log("Not a supported currency, please write a real currency(3 letters)");
+                    return [4 /*yield*/, askQuestion("Enter the currency for this purchase")];
+                case 13:
+                    currency = (_a.sent()).toUpperCase();
+                    return [3 /*break*/, 12];
+                case 14:
+                    converted_amount = parseFloat(amount);
+                    return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
+                case 15:
+                    account = _a.sent();
+                    exchangerate = undefined;
+                    if (!(account.currency !== currency)) return [3 /*break*/, 19];
+                    _a.label = 16;
+                case 16:
+                    _a.trys.push([16, 18, , 19]);
+                    return [4 /*yield*/, fetchExchangeRate(currency, account.currency)];
+                case 17:
+                    exchangerate = _a.sent();
+                    converted_amount = parseFloat(amount) * exchangerate;
+                    return [3 /*break*/, 19];
+                case 18:
+                    error_1 = _a.sent();
+                    console.log("Could not convert the currency, therefor expense not added");
+                    return [3 /*break*/, 19];
+                case 19:
                     expense = {
-                        amount: parseInt(amount),
+                        amount: converted_amount,
+                        currency: currency,
                         category: categoryName,
                         date: date,
                         username: active_account,
-                        description: description
+                        description: description,
+                        exchangerate: exchangerate
                     };
                     return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
-                case 11:
+                case 20:
                     _a.sent();
                     console.log("Expense added successfully!");
+                    if (!account) return [3 /*break*/, 23];
+                    amount_change = converted_amount * -1;
+                    return [4 /*yield*/, (0, account_1.updateBalance)(active_account, amount_change)];
+                case 21:
+                    _a.sent();
                     return [4 /*yield*/, oncallCheckExpenseLimit()];
-                case 12:
+                case 22:
                     _a.sent();
-                    return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
-                case 13:
-                    account = _a.sent();
-                    if (!account) return [3 /*break*/, 15];
-                    account.balance -= parseInt(amount);
-                    return [4 /*yield*/, (0, account_1.updateBalance)(account.accountOwner, account.balance)];
-                case 14:
-                    _a.sent();
-                    _a.label = 15;
-                case 15: return [2 /*return*/];
+                    _a.label = 23;
+                case 23: return [2 /*return*/];
             }
         });
     });
@@ -407,7 +444,7 @@ function wait(ms) {
 */
 function change_or_delete_expense() {
     return __awaiter(this, void 0, void 0, function () {
-        var active_account, choice, _a, description, date, amount, categoryName, new_description, new_date, updated_expense, date2, description2;
+        var active_account, choice, _a, description, date, amount, categoryName, new_description, new_currency, new_date, updated_expense, date2, description2;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -423,13 +460,13 @@ function change_or_delete_expense() {
                     _a = choice;
                     switch (_a) {
                         case "1": return [3 /*break*/, 3];
-                        case "2": return [3 /*break*/, 11];
+                        case "2": return [3 /*break*/, 12];
                     }
-                    return [3 /*break*/, 15];
+                    return [3 /*break*/, 16];
                 case 3: return [4 /*yield*/, askQuestion("Enter description for the expense you want to change: ")];
                 case 4:
                     description = _b.sent();
-                    return [4 /*yield*/, askValidDate("Enter date for the purchase you want to change")];
+                    return [4 /*yield*/, askValidDate("Enter date for the purchase you want to change. Format is YYYY/MM/DD")];
                 case 5:
                     date = _b.sent();
                     console.log("Expense found, please enter the new details for the expense.");
@@ -442,34 +479,38 @@ function change_or_delete_expense() {
                     return [4 /*yield*/, askQuestion("Enter new description: ")];
                 case 8:
                     new_description = _b.sent();
-                    return [4 /*yield*/, askValidDate("Enter new date")];
+                    return [4 /*yield*/, askQuestion("What currency was this purchase made in")];
                 case 9:
+                    new_currency = _b.sent();
+                    return [4 /*yield*/, askValidDate("Enter new date, Format is YYYY/MM/DD")];
+                case 10:
                     new_date = _b.sent();
                     updated_expense = {
                         amount: parseInt(amount),
+                        currency: new_currency,
                         category: categoryName,
                         date: date,
                         username: active_account,
                         description: new_description
                     };
                     return [4 /*yield*/, (0, expense_1.updateExpense)(active_account, new_date, description, updated_expense)];
-                case 10:
+                case 11:
                     _b.sent();
-                    return [3 /*break*/, 16];
-                case 11: return [4 /*yield*/, askValidDate("Enter date for the expense you want to delete")];
-                case 12:
+                    return [3 /*break*/, 17];
+                case 12: return [4 /*yield*/, askValidDate("Enter date for the expense you want to delete, Format is YYYY/MM/DD")];
+                case 13:
                     date2 = _b.sent();
                     return [4 /*yield*/, askQuestion("Enter description for the expense you want to delete: ")];
-                case 13:
+                case 14:
                     description2 = _b.sent();
                     return [4 /*yield*/, (0, expense_1.deleteExpense)(active_account, date2, description2)];
-                case 14:
-                    _b.sent();
-                    return [3 /*break*/, 16];
                 case 15:
+                    _b.sent();
+                    return [3 /*break*/, 17];
+                case 16:
                     console.log("Invalid option. Try again.");
-                    _b.label = 16;
-                case 16: return [2 /*return*/];
+                    _b.label = 17;
+                case 17: return [2 /*return*/];
             }
         });
     });
@@ -524,7 +565,7 @@ function getExpensesForUser() {
                     return [4 /*yield*/, askQuestion("press any button to continue")];
                 case 5:
                     awaits = _b.sent();
-                    _b.label = 6;
+                    return [3 /*break*/, 21];
                 case 6: return [4 /*yield*/, askCategorySelection("What category do you want to change this purchase to be in?")];
                 case 7:
                     categoryName = _b.sent();
@@ -533,7 +574,7 @@ function getExpensesForUser() {
                     expenses_category = _b.sent();
                     console.log(expenses_category);
                     return [3 /*break*/, 21];
-                case 9: return [4 /*yield*/, askValidDate("For which date do you want to see your expenses")];
+                case 9: return [4 /*yield*/, askValidDate("For which date do you want to see your expenses, Format is YYYY/MM/DD")];
                 case 10:
                     date = _b.sent();
                     return [4 /*yield*/, (0, expense_1.getExpensesByDate)(active_account, date)];
@@ -609,12 +650,12 @@ function account_options() {
                     switch (_a) {
                         case "1": return [3 /*break*/, 4];
                         case "2": return [3 /*break*/, 5];
-                        case "3": return [3 /*break*/, 30];
+                        case "3": return [3 /*break*/, 31];
                     }
-                    return [3 /*break*/, 35];
+                    return [3 /*break*/, 36];
                 case 4:
                     console.log(account);
-                    return [3 /*break*/, 36];
+                    return [3 /*break*/, 37];
                 case 5:
                     options = ["1. Account Number", "2. Balance", "3. Currency", "4. Username", "5. Password"];
                     return [4 /*yield*/, askQuestion("What in your account do you want to change? \n" + options.join("\n") + "\nEnter choice: ")];
@@ -634,15 +675,14 @@ function account_options() {
                         case "2": return [3 /*break*/, 10];
                         case "3": return [3 /*break*/, 15];
                         case "4": return [3 /*break*/, 18];
-                        case "5": return [3 /*break*/, 20];
-                        case "6": return [3 /*break*/, 22];
+                        case "5": return [3 /*break*/, 21];
+                        case "6": return [3 /*break*/, 23];
                     }
-                    return [3 /*break*/, 26];
+                    return [3 /*break*/, 27];
                 case 8: return [4 /*yield*/, askQuestion("Enter new account number: ")];
                 case 9:
                     value = _c.sent();
-                    (0, expense_1.updateallaccountowner)(account.accountOwner, value);
-                    return [3 /*break*/, 27];
+                    return [3 /*break*/, 28];
                 case 10: return [4 /*yield*/, askQuestion("Enter new balance: ")];
                 case 11:
                     value = _c.sent();
@@ -654,7 +694,7 @@ function account_options() {
                 case 13:
                     value = _c.sent();
                     return [3 /*break*/, 12];
-                case 14: return [3 /*break*/, 27];
+                case 14: return [3 /*break*/, 28];
                 case 15:
                     if (!(value.length !== 3)) return [3 /*break*/, 17];
                     return [4 /*yield*/, askQuestion("Enter new currency: ")];
@@ -664,31 +704,34 @@ function account_options() {
                         console.log("Currency must be 3 characters long. Try again.");
                     }
                     return [3 /*break*/, 15];
-                case 17: return [3 /*break*/, 27];
+                case 17: return [3 /*break*/, 28];
                 case 18: return [4 /*yield*/, askQuestion("Enter new username: ")];
                 case 19:
                     value = _c.sent();
-                    return [3 /*break*/, 27];
-                case 20: return [4 /*yield*/, askQuestion("Enter new password: ")];
-                case 21:
+                    return [4 /*yield*/, (0, expense_1.updateallusername)(account_to_be_changed.username, value)];
+                case 20:
+                    _c.sent();
+                    return [3 /*break*/, 28];
+                case 21: return [4 /*yield*/, askQuestion("Enter new password: ")];
+                case 22:
                     value = _c.sent();
                     value = crypto.createHash('sha256').update(value).digest("hex");
-                    return [3 /*break*/, 27];
-                case 22: return [4 /*yield*/, askQuestion("Enter new limit for spending: ")];
-                case 23:
-                    value = _c.sent();
-                    _c.label = 24;
+                    return [3 /*break*/, 28];
+                case 23: return [4 /*yield*/, askQuestion("Enter new limit for spending: ")];
                 case 24:
-                    if (!(isNaN(parseInt(value)) || parseInt(value) < 0)) return [3 /*break*/, 26];
+                    value = _c.sent();
+                    _c.label = 25;
+                case 25:
+                    if (!(isNaN(parseInt(value)) || parseInt(value) < 0)) return [3 /*break*/, 27];
                     console.log("The new account limit must be a positive number");
                     return [4 /*yield*/, askQuestion("Enter new balance: ")];
-                case 25:
-                    value = _c.sent();
-                    return [3 /*break*/, 24];
                 case 26:
+                    value = _c.sent();
+                    return [3 /*break*/, 25];
+                case 27:
                     console.log("Invalid option. Try again.");
                     return [2 /*return*/];
-                case 27:
+                case 28:
                     fieldNames = {
                         "1": "accountOwner",
                         "2": "balance",
@@ -697,30 +740,30 @@ function account_options() {
                         "5": "password",
                         "6": "limit_account"
                     };
-                    if (!fieldNames[change_to]) return [3 /*break*/, 29];
+                    if (!fieldNames[change_to]) return [3 /*break*/, 30];
                     return [4 /*yield*/, (0, account_1.updates_specific_field)(fieldNames[change_to], active_account, value)];
-                case 28:
+                case 29:
                     _c.sent();
                     console.log("Account updated successfully!");
-                    _c.label = 29;
-                case 29: return [3 /*break*/, 36];
-                case 30: return [4 /*yield*/, askQuestion("Are you sure you want to delete your account? (yes/no): ")];
-                case 31:
-                    confirm_1 = _c.sent();
-                    if (!(confirm_1.toLowerCase() === "yes")) return [3 /*break*/, 34];
-                    return [4 /*yield*/, (0, account_1.deleteAccount)(active_account)];
+                    _c.label = 30;
+                case 30: return [3 /*break*/, 37];
+                case 31: return [4 /*yield*/, askQuestion("Are you sure you want to delete your account? (yes/no): ")];
                 case 32:
+                    confirm_1 = _c.sent();
+                    if (!(confirm_1.toLowerCase() === "yes")) return [3 /*break*/, 35];
+                    return [4 /*yield*/, (0, account_1.deleteAccount)(active_account)];
+                case 33:
                     _c.sent();
                     console.log("Account deleted successfully!");
                     return [4 /*yield*/, (0, expense_1.deleteallexpense)(active_account)];
-                case 33:
+                case 34:
                     _c.sent();
-                    _c.label = 34;
-                case 34: return [3 /*break*/, 36];
-                case 35:
+                    _c.label = 35;
+                case 35: return [3 /*break*/, 37];
+                case 36:
                     console.log("Invalid option. Try again.");
-                    _c.label = 36;
-                case 36: return [2 /*return*/];
+                    _c.label = 37;
+                case 37: return [2 /*return*/];
             }
         });
     });
@@ -748,7 +791,7 @@ function awaitUserInput() {
 */
 function csvparser(inputfile) {
     return __awaiter(this, void 0, void 0, function () {
-        var active_account, account, results, validExpenses;
+        var active_account, results, account;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
@@ -759,6 +802,7 @@ function csvparser(inputfile) {
                         console.log("No user logged in!");
                         return [2 /*return*/];
                     }
+                    results = [];
                     return [4 /*yield*/, (0, account_1.getAccount)(active_account)];
                 case 2:
                     account = _a.sent();
@@ -766,89 +810,109 @@ function csvparser(inputfile) {
                         console.log("Account not found!");
                         return [2 /*return*/];
                     }
-                    results = [];
-                    validExpenses = [];
                     return [2 /*return*/, new Promise(function (resolve, reject) {
                             fs.createReadStream(inputfile)
-                                .pipe((0, csv_parser_1.default)())
+                                .pipe(csv())
                                 .on('data', function (data) { return results.push(data); })
                                 .on('end', function () { return __awaiter(_this, void 0, void 0, function () {
-                                var totalAmount, _loop_1, _i, results_1, row, _a, validExpenses_1, expense, error_1;
-                                return __generator(this, function (_b) {
-                                    switch (_b.label) {
+                                var totalConvertedAmount, _loop_1, _i, results_1, row, change, error_2;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
                                         case 0:
-                                            _b.trys.push([0, 7, , 10]);
-                                            totalAmount = 0;
+                                            _a.trys.push([0, 9, , 10]);
+                                            totalConvertedAmount = 0;
                                             _loop_1 = function (row) {
-                                                if (!row.amount || !row.date || !row.category || !row.description) {
-                                                    console.log("Skipping invalid row: ".concat(JSON.stringify(row)));
-                                                    return "continue";
-                                                }
-                                                var categoryKey = Object.keys(expense_categories).find(function (key) { return expense_categories[key] === row.category; });
-                                                if (!categoryKey) {
-                                                    console.log("Skipping row with invalid category: ".concat(row.category));
-                                                    return "continue";
-                                                }
-                                                var date = new Date(row.date);
-                                                if (isNaN(date.getTime())) {
-                                                    console.log("Skipping row with invalid date: ".concat(row.date));
-                                                    return "continue";
-                                                }
-                                                var amount = parseFloat(row.amount);
-                                                if (isNaN(amount)) {
-                                                    console.log("Skipping row with invalid amount: ".concat(row.amount));
-                                                    return "continue";
-                                                }
-                                                validExpenses.push({
-                                                    amount: amount,
-                                                    category: row.category,
-                                                    date: date,
-                                                    username: active_account,
-                                                    description: row.description
+                                                var _b, year, month, day, adjustedMonth, date, categoryKey, currency, convertedAmount, exchangeRate, error_3, expense;
+                                                return __generator(this, function (_c) {
+                                                    switch (_c.label) {
+                                                        case 0:
+                                                            // Validate CSV format
+                                                            if (!row.Amount || !row.Date || !row.Category || !row.Description || !row.Currency) {
+                                                                console.log("Skipping invalid row: ".concat(JSON.stringify(row)));
+                                                                return [2 /*return*/, "continue"];
+                                                            }
+                                                            _b = row.Date.split('/').map(Number), year = _b[0], month = _b[1], day = _b[2];
+                                                            adjustedMonth = month - 1;
+                                                            date = new Date(year, adjustedMonth, day);
+                                                            if (isNaN(date.getTime())) {
+                                                                console.log("Skipping row with invalid date: ".concat(row.Date));
+                                                                return [2 /*return*/, "continue"];
+                                                            }
+                                                            categoryKey = Object.keys(expense_categories).find(function (key) { return expense_categories[key] === row.Category; });
+                                                            if (!categoryKey) {
+                                                                console.log("Skipping row with invalid category: ".concat(row.Category));
+                                                                return [2 /*return*/, "continue"];
+                                                            }
+                                                            currency = row.Currency.toUpperCase();
+                                                            if (!currencyCodes.includes(currency)) {
+                                                                console.log("Skipping row with invalid currency: ".concat(row.Currency));
+                                                                return [2 /*return*/, "continue"];
+                                                            }
+                                                            convertedAmount = parseFloat(row.Amount);
+                                                            if (!(currency !== account.currency)) return [3 /*break*/, 4];
+                                                            _c.label = 1;
+                                                        case 1:
+                                                            _c.trys.push([1, 3, , 4]);
+                                                            return [4 /*yield*/, fetchExchangeRate(currency, account.currency)];
+                                                        case 2:
+                                                            exchangeRate = _c.sent();
+                                                            convertedAmount *= exchangeRate;
+                                                            return [3 /*break*/, 4];
+                                                        case 3:
+                                                            error_3 = _c.sent();
+                                                            console.log("Skipping row due to currency conversion error: ".concat(row.Amount));
+                                                            return [2 /*return*/, "continue"];
+                                                        case 4:
+                                                            totalConvertedAmount += convertedAmount;
+                                                            expense = {
+                                                                amount: parseFloat(row.Amount),
+                                                                currency: currency,
+                                                                date: date,
+                                                                category: row.Category,
+                                                                description: row.Description,
+                                                                username: active_account,
+                                                                exchangerate: convertedAmount / parseFloat(row.Amount),
+                                                            };
+                                                            return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
+                                                        case 5:
+                                                            _c.sent();
+                                                            return [2 /*return*/];
+                                                    }
                                                 });
-                                                totalAmount += amount;
                                             };
-                                            for (_i = 0, results_1 = results; _i < results_1.length; _i++) {
-                                                row = results_1[_i];
-                                                _loop_1(row);
-                                            }
-                                            if (totalAmount > account.balance) {
-                                                throw new Error("Insufficient balance (".concat(account.balance, ") for total expenses (").concat(totalAmount, ")"));
-                                            }
-                                            _a = 0, validExpenses_1 = validExpenses;
-                                            _b.label = 1;
+                                            _i = 0, results_1 = results;
+                                            _a.label = 1;
                                         case 1:
-                                            if (!(_a < validExpenses_1.length)) return [3 /*break*/, 4];
-                                            expense = validExpenses_1[_a];
-                                            return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
+                                            if (!(_i < results_1.length)) return [3 /*break*/, 4];
+                                            row = results_1[_i];
+                                            return [5 /*yield**/, _loop_1(row)];
                                         case 2:
-                                            _b.sent();
-                                            _b.label = 3;
+                                            _a.sent();
+                                            _a.label = 3;
                                         case 3:
-                                            _a++;
+                                            _i++;
                                             return [3 /*break*/, 1];
                                         case 4:
-                                            account.balance -= totalAmount;
-                                            return [4 /*yield*/, (0, account_1.updateBalance)(account.accountOwner, account.balance)];
+                                            if (!(account.balance >= totalConvertedAmount)) return [3 /*break*/, 6];
+                                            change = totalConvertedAmount * -1;
+                                            return [4 /*yield*/, (0, account_1.updateBalance)(account.accountOwner, change)];
                                         case 5:
-                                            _b.sent();
-                                            console.log("Successfully imported ".concat(validExpenses.length, " expenses"));
-                                            return [4 /*yield*/, oncallCheckExpenseLimit()];
+                                            _a.sent();
+                                            console.log("Account balance updated");
+                                            return [3 /*break*/, 7];
                                         case 6:
-                                            _b.sent();
+                                            console.log("Insufficient balance for expenses");
+                                            _a.label = 7;
+                                        case 7:
+                                            console.log("Successfully imported ".concat(results.length, " expenses"));
+                                            return [4 /*yield*/, oncallCheckExpenseLimit()];
+                                        case 8:
+                                            _a.sent();
                                             resolve();
                                             return [3 /*break*/, 10];
-                                        case 7:
-                                            error_1 = _b.sent();
-                                            if (!(validExpenses.length > 0)) return [3 /*break*/, 9];
-                                            return [4 /*yield*/, Promise.all(validExpenses.map(function (expense) {
-                                                    return (0, expense_1.deleteExpense)(expense.username, expense.date, expense.description);
-                                                }))];
-                                        case 8:
-                                            _b.sent();
-                                            _b.label = 9;
                                         case 9:
-                                            reject(error_1);
+                                            error_2 = _a.sent();
+                                            reject(error_2);
                                             return [3 /*break*/, 10];
                                         case 10: return [2 /*return*/];
                                     }
@@ -942,6 +1006,45 @@ function oncallCheckExpenseLimit() {
                         console.log("\u2139Notice: More than 50% of the limit has been used (".concat((percentUsed * 100).toFixed(2), "%)."));
                     }
                     return [2 /*return*/];
+            }
+        });
+    });
+}
+/**
+* A function to get excange rates for currency pairs, will be used for exhanges not made in the accounts base currency
+* @param - no parameter.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/
+function fetchExchangeRate(fromCurrency, toCurrency) {
+    return __awaiter(this, void 0, void 0, function () {
+        var API_KEY, url, answer, data, error_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    API_KEY = "e456750106a89fb5147294e2";
+                    url = "https://v6.exchangerate-api.com/v6/".concat(API_KEY, "/pair/").concat(fromCurrency, "/").concat(toCurrency);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, fetch(url)];
+                case 2:
+                    answer = _a.sent();
+                    return [4 /*yield*/, answer.json()];
+                case 3:
+                    data = _a.sent();
+                    if (data.result === "success") {
+                        return [2 /*return*/, data.conversion_rate];
+                    }
+                    else {
+                        throw new Error("Failed to fetch exchange rate");
+                    }
+                    return [3 /*break*/, 5];
+                case 4:
+                    error_4 = _a.sent();
+                    console.error("Error fetching exchange rate:", error_4);
+                    throw error_4;
+                case 5: return [2 /*return*/];
             }
         });
     });

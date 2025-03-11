@@ -90,7 +90,7 @@ function getAccount(username) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [2 /*return*/, db.collection(COLLECTION_NAME).findOne({ username: username })];
+                    return [2 /*return*/, db.collection(COLLECTION_NAME).findOne({ username: username }, { projection: { _id: 0 } })];
             }
         });
     });

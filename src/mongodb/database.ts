@@ -7,7 +7,6 @@ export const client = new MongoClient(MONGO_URI);
 export async function connectDB() {
   try {
     await client.connect();
-    console.log("Connected to MongoDB");
     return client.db("expenseTracker"); // Use your database name
   } catch (error) {
     console.error("MongoDB Connection Error:", error);

@@ -1,11 +1,11 @@
 import * as readline from 'readline';
 import { createAccount as createMongoAccount, getAccount, updateBalance, Account, find_active_account, deleteAccount, updates_specific_field, switch_logged_in_status} from '../mongodb/account';
 import { addExpense as addMongoExpense, Expense, getExpenses, getExpensesByCategory, getExpensesByDate, getExpensesByAmount, deleteExpense, updateExpense,getExpensesByDescription
-    ,updateallaccountowner, deleteallexpense, get_total_expense_account} from '../mongodb/expense';
+    ,updateallusername, deleteallexpense, get_total_expense_account} from '../mongodb/expense';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import csv from 'csv-parser';
+import csv = require('csv-parser');
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 //helper functions
 
@@ -44,18 +44,23 @@ async function askValidDate(prompt: string): Promise<Date> {
 
   do {
     const dateStr = await askQuestion(prompt);
-    date = new Date(dateStr);
+    const normalizedDateStr = dateStr.replace(/\//g, '-');
+    const [year, month, day] = normalizedDateStr.split('-').map(Number);
+
+    // Adjust month (JavaScript months are 0-based)
+    const adjustedMonth = month - 1;
+
+    date = new Date(year, adjustedMonth, day);
+
     if (isNaN(date.getTime())) {
-      console.log("Invalid date format. Please try again.");
+      console.log("Invalid date format. Please try again (expected format: YYYY/MM/DD).");
     } else {
       isValid = true;
     }
   } while (!isValid);
-  
+
   return date;
 }
-
-
 
 // Defining the readline interface
 export const rl = readline.createInterface({
@@ -184,6 +189,10 @@ const expense_categories : Record<string, string>= {
   "6": "Entertainment",
   "7": "Other"
 };
+
+const currencyCodes = [ // All currency that can be added
+  "AFA", "ALL", "DZD", "AOA", "ARS", "AMD", "AWG", "AUD", "AZN", "BSD", "BHD", "BDT", "BBD", "BYR", "BEF", "BZD", "BMD", "BTN", "BTC", "BOB", "BAM", "BWP", "BRL", "GBP", "BND", "BGN", "BIF", "KHR", "CAD", "CVE", "KYD", "XOF", "XAF", "XPF", "CLP", "CLF", "CNY", "COP", "KMF", "CDF", "CRC", "HRK", "CUC", "CZK", "DKK", "DJF", "DOP", "XCD", "EGP", "ERN", "EEK", "ETB", "EUR", "FKP", "FJD", "GMD", "GEL", "DEM", "GHS", "GIP", "GRD", "GTQ", "GNF", "GYD", "HTG", "HNL", "HKD", "HUF", "ISK", "INR", "IDR", "IRR", "IQD", "ILS", "ITL", "JMD", "JPY", "JOD", "KZT", "KES", "KWD", "KGS", "LAK", "LVL", "LBP", "LSL", "LRD", "LYD", "LTC", "LTL", "MOP", "MKD", "MGA", "MWK", "MYR", "MVR", "MRO", "MUR", "MXN", "MDL", "MNT", "MAD", "MZM", "MMK", "NAD", "NPR", "ANG", "TWD", "NZD", "NIO", "NGN", "KPW", "NOK", "OMR", "PKR", "PAB", "PGK", "PYG", "PEN", "PHP", "PLN", "QAR", "RON", "RUB", "RWF", "SVC", "WST", "STD", "SAR", "RSD", "SCR", "SLL", "SGD", "SKK", "SBD", "SOS", "ZAR", "KRW", "SSP", "XDR", "LKR", "SHP", "SDG", "SRD", "SZL", "SEK", "CHF", "SYP", "TJS", "TZS", "THB", "TOP", "TTD", "TND", "TRY", "TMT", "UGX", "UAH", "AED", "UYU", "USD", "UZS", "VUV", "VEF", "VND", "YER", "ZMK", "ZWL"
+];
 /**
 * Adds a new expense to the database.
 * If no user is logged in, the function will return without adding the expense.
@@ -202,30 +211,51 @@ export async function addExpense() : Promise<void> {
   }
   const question = await askQuestion("Do you want to add manually or import from CSV? (manual/csv): ");
   if (question === "csv") {
-    const inputfile = await askQuestion("Enter the name of the CSV file: ");
+    const inputfile = await askQuestion("Enter the file of path of your csv file: ");
     await csvparser(inputfile);
     await oncallCheckExpenseLimit();
     return;
   }
   const amount = await askQuestion("Enter amount: ");
-  const date = await askValidDate("Enter Valid date")
+  const date = await askValidDate("Enter Valid date, Format is YYYY/MM/DD :")
   const categoryName = await askCategorySelection("What category do you want to change this purchase to be in?");
   const description = await askQuestion("Enter description: ");
+  let currency = (await askQuestion("Enter the currency for this purchase")).toUpperCase();
+
+  while (!currencyCodes.includes(currency)) {
+    console.log("Not a supported currency, please write a real currency(3 letters)")
+    currency = (await askQuestion("Enter the currency for this purchase")).toUpperCase();
+  }
+
+  let converted_amount = parseFloat(amount);
+  const account = await getAccount(active_account);
+  let exchangerate : number | undefined = undefined;
+
+  if (account!.currency !== currency) {
+    try {
+      exchangerate = await fetchExchangeRate(currency, account!.currency);
+      converted_amount = parseFloat(amount) * exchangerate;
+    }
+    catch (error) {
+      console.log("Could not convert the currency, therefor expense not added")
+    }
+  }
   const expense : Expense = {
-    amount: parseInt(amount),
+    amount: converted_amount,
+    currency : currency,
     category: categoryName,
     date: date,
     username: active_account,
-    description : description
+    description : description,
+    exchangerate : exchangerate
     }
   await addMongoExpense(expense);
   console.log("Expense added successfully!");
-  await oncallCheckExpenseLimit();
   
-  const account = await getAccount(active_account);
   if (account) { 
-    account.balance -= parseInt(amount);
-    await updateBalance(account.accountOwner, account.balance);
+    const amount_change = converted_amount *-1
+    await updateBalance(active_account, amount_change);
+    await oncallCheckExpenseLimit();
   }
 }
 /**
@@ -260,14 +290,16 @@ export async function change_or_delete_expense() : Promise<void> {
   switch (choice) {
     case "1":
       const description = await askQuestion("Enter description for the expense you want to change: ");
-      const date = await askValidDate("Enter date for the purchase you want to change")
+      const date = await askValidDate("Enter date for the purchase you want to change. Format is YYYY/MM/DD")
       console.log("Expense found, please enter the new details for the expense.");
       const amount = await askQuestion("Enter amount: ");
       const categoryName = await askCategorySelection("What category do you want to change this purchase to be in?");
       const new_description = await askQuestion("Enter new description: ");
-      const new_date = await askValidDate("Enter new date")
+      const new_currency = await askQuestion("What currency was this purchase made in")
+      const new_date = await askValidDate("Enter new date, Format is YYYY/MM/DD")
       const updated_expense : Expense = {
         amount: parseInt(amount),
+        currency: new_currency,
         category: categoryName,
         date: date,
         username: active_account,
@@ -276,7 +308,7 @@ export async function change_or_delete_expense() : Promise<void> {
       await updateExpense(active_account, new_date, description, updated_expense);
       break;
     case "2":
-      const date2 = await askValidDate("Enter date for the expense you want to delete")
+      const date2 = await askValidDate("Enter date for the expense you want to delete, Format is YYYY/MM/DD")
       const description2 = await askQuestion("Enter description for the expense you want to delete: ");
       await deleteExpense(active_account, date2, description2);
       break;
@@ -314,13 +346,14 @@ export async function getExpensesForUser() {
       const expenses = await getExpenses(active_account);
       console.log(expenses);
       const awaits = await askQuestion("press any button to continue");
+      break;
     case "2":
       const categoryName = await askCategorySelection("What category do you want to change this purchase to be in?");
       const expenses_category = await getExpensesByCategory(active_account, categoryName);
       console.log(expenses_category);
       break;
     case "3":
-      const date = await askValidDate("For which date do you want to see your expenses")
+      const date = await askValidDate("For which date do you want to see your expenses, Format is YYYY/MM/DD")
       const expenses_date = await getExpensesByDate(active_account, date);
       console.log(expenses_date);
       break;
@@ -389,7 +422,6 @@ export async function account_options() : Promise<void> {
       switch (change_to) {
         case "1":
           value = await askQuestion("Enter new account number: ");
-          updateallaccountowner(account.accountOwner, value);
           break;
         case "2":
           value = await askQuestion("Enter new balance: ");
@@ -408,7 +440,7 @@ export async function account_options() : Promise<void> {
           break;
         case "4":
           value = await askQuestion("Enter new username: ");
-          await updateallaccountowner(account_to_be_changed.password, value);
+          await updateallusername(account_to_be_changed.username, value);
           break;
         case "5":
           value = await askQuestion("Enter new password: ");
@@ -479,90 +511,102 @@ export async function csvparser(inputfile: string): Promise<void> {
     return;
   }
 
+  const results: any[] = [];
   const account = await getAccount(active_account);
   if (!account) {
     console.log("Account not found!");
     return;
   }
 
-  const results: any[] = [];
-  const validExpenses: Expense[] = [];
-  
   return new Promise((resolve, reject) => {
     fs.createReadStream(inputfile)
       .pipe(csv())
       .on('data', (data: any) => results.push(data))
       .on('end', async () => {
         try {
-          let totalAmount = 0;
-          
+          let totalConvertedAmount = 0;
+
           for (const row of results) {
-            if (!row.amount || !row.date || !row.category || !row.description) {
+            // Validate CSV format
+            if (!row.Amount || !row.Date || !row.Category || !row.Description || !row.Currency) {
               console.log(`Skipping invalid row: ${JSON.stringify(row)}`);
               continue;
             }
 
-            const categoryKey = Object.keys(expense_categories).find(
-              key => expense_categories[key] === row.category
-            );
-            
-            if (!categoryKey) {
-              console.log(`Skipping row with invalid category: ${row.category}`);
-              continue;
-            }
+            // Parse the date string (YYYY/MM/DD)
+            const [year, month, day] = row.Date.split('/').map(Number);
+            const adjustedMonth = month - 1; // Adjust month (0-based)
+            const date = new Date(year, adjustedMonth, day);
 
-            const date = new Date(row.date);
             if (isNaN(date.getTime())) {
-              console.log(`Skipping row with invalid date: ${row.date}`);
+              console.log(`Skipping row with invalid date: ${row.Date}`);
               continue;
             }
 
-            const amount = parseFloat(row.amount);
-            if (isNaN(amount)) {
-              console.log(`Skipping row with invalid amount: ${row.amount}`);
-              continue;
-            }
-
-            validExpenses.push({
-              amount: amount,
-              category: row.category,
-              date: date,
-              username: active_account,
-              description: row.description
-            });
-
-            totalAmount += amount;
-          }
-
-          if (totalAmount > account.balance) {
-            throw new Error(
-              `Insufficient balance (${account.balance}) for total expenses (${totalAmount})`
+            // Validate category
+            const categoryKey = Object.keys(expense_categories).find(
+              key => expense_categories[key] === row.Category
             );
-          }
 
-          for (const expense of validExpenses) {
+            if (!categoryKey) {
+              console.log(`Skipping row with invalid category: ${row.Category}`);
+              continue;
+            }
+
+            // Validate currency
+            const currency = row.Currency.toUpperCase();
+            if (!currencyCodes.includes(currency)) {
+              console.log(`Skipping row with invalid currency: ${row.Currency}`);
+              continue;
+            }
+
+            // Convert to account's currency
+            let convertedAmount = parseFloat(row.Amount);
+            if (currency !== account.currency) {
+              try {
+                const exchangeRate = await fetchExchangeRate(currency, account.currency);
+                convertedAmount *= exchangeRate;
+              } catch (error) {
+                console.log(`Skipping row due to currency conversion error: ${row.Amount}`);
+                continue;
+              }
+            }
+
+            totalConvertedAmount += convertedAmount;
+
+            const expense: Expense = {
+              amount: parseFloat(row.Amount),
+              currency: currency,
+              date: date,
+              category: row.Category,
+              description: row.Description,
+              username: active_account,
+              exchangerate: convertedAmount / parseFloat(row.Amount), 
+            };
+
             await addMongoExpense(expense);
           }
 
-          account.balance -= totalAmount;
-          await updateBalance(account.accountOwner, account.balance);
+          // Update account balance
+          if (account.balance >= totalConvertedAmount) {
+            const change = totalConvertedAmount *-1;
+            await updateBalance(account.accountOwner, change);
+            console.log("Account balance updated");
+          } else {
+            console.log("Insufficient balance for expenses");
+          }
 
-          console.log(`Successfully imported ${validExpenses.length} expenses`);
+          console.log(`Successfully imported ${results.length} expenses`);
           await oncallCheckExpenseLimit();
           resolve();
         } catch (error) {
-          if (validExpenses.length > 0) {
-            await Promise.all(
-              validExpenses.map(expense => 
-                deleteExpense(expense.username, expense.date, expense.description)
-            ));
-          }
           reject(error);
         }
       })
       .on('error', (error: Error) => reject(error));
   });
 }
+
 /**
 * Exports all the expenses for the active user to a csv file.
 * @param - no parameter.
@@ -626,3 +670,27 @@ export async function oncallCheckExpenseLimit(): Promise<void> {
   }
 }
 
+/**
+* A function to get excange rates for currency pairs, will be used for exhanges not made in the accounts base currency
+* @param - no parameter.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes, with no value.
+*/   
+
+export async function fetchExchangeRate(fromCurrency: string, toCurrency: string): Promise<number> {
+  const API_KEY = "e456750106a89fb5147294e2";
+  const url = `https://v6.exchangerate-api.com/v6/${API_KEY}/pair/${fromCurrency}/${toCurrency}`;
+
+  try {
+    const answer = await fetch(url);
+    const data = await answer.json();
+    if (data.result === "success") {
+      return data.conversion_rate;
+    } else {
+      throw new Error("Failed to fetch exchange rate");
+    }
+  } catch (error) {
+    console.error("Error fetching exchange rate:", error);
+    throw error;
+  }
+}

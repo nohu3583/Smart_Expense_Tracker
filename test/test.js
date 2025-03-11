@@ -36,22 +36,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var expense_1 = require("../src/mongodb/expense");
 var account_1 = require("../src/mongodb/account");
-var functions_1 = require("../src/app/functions");
-test(("Test that askquestion works"), function () { return __awaiter(void 0, void 0, void 0, function () {
-    var question, answer;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, (0, functions_1.askQuestion)("Svara ja på detta")];
-            case 1:
-                question = _a.sent();
-                answer = "ja";
-                expect(answer).toStrictEqual(question);
-                return [2 /*return*/];
-        }
-    });
-}); });
-test("Test that amount of of account is 1 (as of now)"), function () { return __awaiter(void 0, void 0, void 0, function () {
+test("Test that amount of accounts is 0 initially", function () { return __awaiter(void 0, void 0, void 0, function () {
     var amount_user;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -62,16 +49,162 @@ test("Test that amount of of account is 1 (as of now)"), function () { return __
                 return [2 /*return*/];
         }
     });
-}); };
-test("The active account should be bombaclat"), function () { return __awaiter(void 0, void 0, void 0, function () {
-    var active_account;
+}); });
+test("Create account function", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var account, created_account;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                account = {
+                    accountOwner: "123456",
+                    balance: 9000,
+                    currency: "DKK",
+                    username: "PKD",
+                    password: "intehashed",
+                    loggedIn: false,
+                    limit_account: 2000
+                };
+                return [4 /*yield*/, (0, account_1.createAccount)(account)];
+            case 1:
+                _a.sent();
+                return [4 /*yield*/, (0, account_1.getAccount)(account.username)];
+            case 2:
+                created_account = _a.sent();
+                expect(created_account.username).toStrictEqual(account.username);
+                return [2 /*return*/];
+        }
+    });
+}); });
+var create_account;
+test("Test that getAllUsernames function works", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var usernames;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, account_1.getAllUsernames)()];
+            case 1:
+                usernames = _a.sent();
+                expect(usernames).toStrictEqual(["bombaclat", "PKD"]); // Only the account created in the previous test
+                return [2 /*return*/];
+        }
+    });
+}); });
+test("Amount of acounts should now be two instead of 1", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var amount_of_user;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, account_1.amount_of_accounts)()];
+            case 1:
+                amount_of_user = _a.sent();
+                expect(amount_of_user).toStrictEqual(2);
+                return [2 /*return*/];
+        }
+    });
+}); });
+test("Testing that update balance function works as intented", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var new_balance, created_account;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, account_1.updateBalance)("PKD", -8500)];
+            case 1:
+                _a.sent();
+                new_balance = 500;
+                return [4 /*yield*/, (0, account_1.getAccount)("PKD")];
+            case 2:
+                created_account = _a.sent();
+                expect(created_account === null || created_account === void 0 ? void 0 : created_account.balance).toStrictEqual(new_balance);
+                return [2 /*return*/];
+        }
+    });
+}); });
+test("Find active account returns the active account which right now is my test account", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var username;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, (0, account_1.find_active_account)()];
             case 1:
-                active_account = _a.sent();
-                expect(active_account).toStrictEqual("bombaclat");
+                username = _a.sent();
+                expect(username).toStrictEqual("bombaclat");
                 return [2 /*return*/];
         }
     });
-}); };
+}); });
+test("Switch logged in status for PKD account", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var active_account_status;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, account_1.switch_logged_in_status)("PKD")];
+            case 1:
+                _a.sent();
+                return [4 /*yield*/, (0, account_1.getAccount)("PKD")];
+            case 2:
+                active_account_status = _a.sent();
+                expect(active_account_status === null || active_account_status === void 0 ? void 0 : active_account_status.loggedIn).toStrictEqual(true);
+                return [2 /*return*/];
+        }
+    });
+}); });
+test("Update a specific feild on the PKD account (will update currency)", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var active_account;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, account_1.updates_specific_field)("currency", "PKD", "SEK")];
+            case 1:
+                _a.sent();
+                return [4 /*yield*/, (0, account_1.getAccount)("PKD")];
+            case 2:
+                active_account = _a.sent();
+                expect(active_account === null || active_account === void 0 ? void 0 : active_account.currency).toStrictEqual("SEK"); //Currency is now updated from DKK to SEK
+                return [2 /*return*/];
+        }
+    });
+}); });
+test("Delete account should delete the account for PKD", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var find_account;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, account_1.deleteAccount)("PKD")];
+            case 1:
+                _a.sent();
+                return [4 /*yield*/, (0, account_1.getAccount)("PKD")];
+            case 2:
+                find_account = _a.sent();
+                expect(find_account).toStrictEqual(null);
+                return [2 /*return*/];
+        }
+    });
+}); });
+//Tester för databas filen
+test("There should be no expense logged when starting", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var expenses;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, (0, expense_1.getExpenses)("bombaclat")];
+            case 1:
+                expenses = _a.sent();
+                expect(expenses).toStrictEqual([]);
+                return [2 /*return*/];
+        }
+    });
+}); });
+test("Testing adding a expense to the database", function () { return __awaiter(void 0, void 0, void 0, function () {
+    var expense, new_expense;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                expense = {
+                    amount: 200,
+                    category: "Food",
+                    date: new Date(2003, 6, 16),
+                    username: "bombaclat",
+                    description: "Dyr Kebabtalrik"
+                };
+                return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
+            case 1:
+                _a.sent();
+                new_expense = (0, expense_1.getExpenses)("PKD");
+                console.log(new_expense);
+                expect(new_expense).toHaveLength(1);
+                return [2 /*return*/];
+        }
+    });
+}); });

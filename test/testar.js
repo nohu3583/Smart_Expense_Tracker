@@ -36,40 +36,35 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.client = void 0;
-exports.connectDB = connectDB;
-exports.startTransaction = startTransaction;
-var mongodb_1 = require("mongodb");
-var MONGO_URI = "mongodb+srv://noahhzr:QfgvtOQflRNLZx3F@noahh.vo7o6.mongodb.net/";
-exports.client = new mongodb_1.MongoClient(MONGO_URI);
-function connectDB() {
+var expense_1 = require("../src/mongodb/expense");
+function test() {
     return __awaiter(this, void 0, void 0, function () {
-        var error_1;
+        var expense, expenses, dates;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, exports.client.connect()];
+                    expense = {
+                        amount: 200,
+                        category: "Food",
+                        currency: "SEK",
+                        date: new Date(2003, 6, 16),
+                        username: "bombaclat",
+                        description: "Dyr Kebabtalrik"
+                    };
+                    return [4 /*yield*/, (0, expense_1.addExpense)(expense)];
                 case 1:
                     _a.sent();
-                    return [2 /*return*/, exports.client.db("expenseTracker")]; // Use your database name
+                    return [4 /*yield*/, (0, expense_1.getExpenses)("bombaclat")];
                 case 2:
-                    error_1 = _a.sent();
-                    console.error("MongoDB Connection Error:", error_1);
-                    return [3 /*break*/, 3];
-                case 3: return [2 /*return*/];
+                    expenses = _a.sent();
+                    console.log(expenses[0].date);
+                    console.log(typeof (expenses[0].date));
+                    dates = new Date(2003, 6, 16);
+                    console.log(dates);
+                    console.log((dates.getDate() === expenses[0].date.getDate()));
+                    return [2 /*return*/];
             }
         });
     });
 }
-// Function to start a transaction session
-function startTransaction() {
-    return __awaiter(this, void 0, void 0, function () {
-        var session;
-        return __generator(this, function (_a) {
-            session = exports.client.startSession();
-            session.startTransaction();
-            return [2 /*return*/, session];
-        });
-    });
-}
+test();

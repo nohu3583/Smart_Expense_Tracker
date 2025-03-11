@@ -44,7 +44,7 @@ exports.getExpensesByAmount = getExpensesByAmount;
 exports.deleteExpense = deleteExpense;
 exports.updateExpense = updateExpense;
 exports.getExpensesByDescription = getExpensesByDescription;
-exports.updateallaccountowner = updateallaccountowner;
+exports.updateallusername = updateallusername;
 exports.deleteallexpense = deleteallexpense;
 exports.get_total_expense_account = get_total_expense_account;
 var database_1 = require("./database");
@@ -57,7 +57,7 @@ var COLLECTION_NAME = "Expense";
 */
 function addExpense(expense) {
     return __awaiter(this, void 0, void 0, function () {
-        var db, result;
+        var db, date, result;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
@@ -65,6 +65,7 @@ function addExpense(expense) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
+                    date = expense.date;
                     return [4 /*yield*/, db.collection(COLLECTION_NAME).insertOne(expense)];
                 case 2:
                     result = _a.sent();
@@ -90,11 +91,21 @@ function getExpenses(username) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ username: username }).toArray()];
+                    return [2 /*return*/, db.collection(COLLECTION_NAME)
+                            .find({ username: username })
+                            .project({ _id: 0 })
+                            .toArray()];
             }
         });
     });
 }
+/**
+* Filters and returns an array of expenses for a user based on a single category
+* @param {string} username - On what user the filter should be done.
+* @param {string} category - What category the filter should be for.
+* @precondition - no preconditions
+* @returns {Promise<void>} Returns a promise that resolves when the function completes.
+*/
 function getExpensesByCategory(username, category) {
     return __awaiter(this, void 0, void 0, function () {
         var db;
@@ -105,12 +116,36 @@ function getExpensesByCategory(username, category) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ username: username, category: category }).toArray()];
+                    return [2 /*return*/, db.collection(COLLECTION_NAME)
+                            .find({ username: username, category: category }, { projection: { _id: 0 } }) // Exclude _id
+                            .toArray()];
             }
         });
     });
 }
-function getExpensesByDate(accountOwner, date) {
+function getExpensesByDate(username, date) {
+    return __awaiter(this, void 0, void 0, function () {
+        var db, startOfDay, endOfDay;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
+                case 1:
+                    db = _a.sent();
+                    if (!db)
+                        return [2 /*return*/];
+                    startOfDay = new Date(date.setHours(0, 0, 0, 0));
+                    endOfDay = new Date(date.setHours(23, 59, 59, 999));
+                    return [2 /*return*/, db.collection(COLLECTION_NAME)
+                            .find({
+                            username: username,
+                            date: { $gte: startOfDay, $lte: endOfDay } // Matches any date within the same day
+                        }, { projection: { _id: 0 } })
+                            .toArray()];
+            }
+        });
+    });
+}
+function getExpensesByAmount(username, amount) {
     return __awaiter(this, void 0, void 0, function () {
         var db;
         return __generator(this, function (_a) {
@@ -120,12 +155,12 @@ function getExpensesByDate(accountOwner, date) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ accountOwner: accountOwner, date: date }).toArray()];
+                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ username: username, amount: amount }, { projection: { _id: 0 } }).toArray()];
             }
         });
     });
 }
-function getExpensesByAmount(accountOwner, amount) {
+function getExpensesByDescription(username, description) {
     return __awaiter(this, void 0, void 0, function () {
         var db;
         return __generator(this, function (_a) {
@@ -135,27 +170,12 @@ function getExpensesByAmount(accountOwner, amount) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ accountOwner: accountOwner, amount: amount }).toArray()];
+                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ username: username, description: description }, { projection: { _id: 0 } }).toArray()];
             }
         });
     });
 }
-function getExpensesByDescription(accountOwner, description) {
-    return __awaiter(this, void 0, void 0, function () {
-        var db;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
-                case 1:
-                    db = _a.sent();
-                    if (!db)
-                        return [2 /*return*/];
-                    return [2 /*return*/, db.collection(COLLECTION_NAME).find({ accountOwner: accountOwner, description: description }).toArray()];
-            }
-        });
-    });
-}
-function deleteExpense(accountOwner, date, description) {
+function deleteExpense(username, date, description) {
     return __awaiter(this, void 0, void 0, function () {
         var db, result;
         return __generator(this, function (_a) {
@@ -165,7 +185,11 @@ function deleteExpense(accountOwner, date, description) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [4 /*yield*/, db.collection(COLLECTION_NAME).deleteOne({ accountOwner: accountOwner, description: description })];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).deleteOne({
+                            username: username,
+                            date: date, // Pass the Date object directly
+                            description: description,
+                        })];
                 case 2:
                     result = _a.sent();
                     if (result.deletedCount === 0) {
@@ -179,7 +203,7 @@ function deleteExpense(accountOwner, date, description) {
         });
     });
 }
-function updateExpense(account, date, description, new_expense) {
+function updateExpense(username_input, date, description, new_expense) {
     return __awaiter(this, void 0, void 0, function () {
         var db;
         return __generator(this, function (_a) {
@@ -189,7 +213,15 @@ function updateExpense(account, date, description, new_expense) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ accountOwner: account, date: date, description: description }, { $set: new_expense })];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateOne({ username_input: username_input, date: date.getTime(), description: description }, {
+                            $set: {
+                                username: new_expense.username,
+                                amount: new_expense.amount,
+                                category: new_expense.category,
+                                date: new_expense.date,
+                                description: new_expense.description
+                            }
+                        })];
                 case 2:
                     _a.sent();
                     return [2 /*return*/];
@@ -197,7 +229,7 @@ function updateExpense(account, date, description, new_expense) {
         });
     });
 }
-function updateallaccountowner(old_account, new_account) {
+function updateallusername(old_username_input, new_username_input) {
     return __awaiter(this, void 0, void 0, function () {
         var db;
         return __generator(this, function (_a) {
@@ -207,7 +239,7 @@ function updateallaccountowner(old_account, new_account) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateMany({ accountOwner: old_account }, { $set: { accountOwner: new_account } })];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).updateMany({ username: old_username_input }, { $set: { username: new_username_input } })];
                 case 2:
                     _a.sent();
                     return [2 /*return*/];
@@ -215,9 +247,9 @@ function updateallaccountowner(old_account, new_account) {
         });
     });
 }
-function deleteallexpense(account) {
+function deleteallexpense(username) {
     return __awaiter(this, void 0, void 0, function () {
-        var db;
+        var db, result;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
@@ -225,10 +257,10 @@ function deleteallexpense(account) {
                     db = _a.sent();
                     if (!db)
                         return [2 /*return*/];
-                    return [4 /*yield*/, db.collection(COLLECTION_NAME).deleteMany({ accountOwner: account })];
+                    return [4 /*yield*/, db.collection(COLLECTION_NAME).deleteMany({ username: username })];
                 case 2:
-                    _a.sent();
-                    console.log("All Expenses Deleted");
+                    result = _a.sent();
+                    console.log("All expenses delted, amount of expenses deleted: ".concat(result.deletedCount));
                     return [2 /*return*/];
             }
         });
@@ -236,7 +268,7 @@ function deleteallexpense(account) {
 }
 function get_total_expense_account(username) {
     return __awaiter(this, void 0, void 0, function () {
-        var db, accounts, sum, i;
+        var db, username_inputs, sum, i;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, (0, database_1.connectDB)()];
@@ -248,10 +280,10 @@ function get_total_expense_account(username) {
                             .find({ username: username }, { projection: { amount: 1, _id: 0 } })
                             .toArray()];
                 case 2:
-                    accounts = _a.sent();
+                    username_inputs = _a.sent();
                     sum = 0;
-                    for (i = 0; i < accounts.length; i++) {
-                        sum += accounts[i].amount;
+                    for (i = 0; i < username_inputs.length; i++) {
+                        sum += username_inputs[i].amount;
                     }
                     return [2 /*return*/, sum];
             }

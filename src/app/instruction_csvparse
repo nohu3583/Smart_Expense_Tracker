@@ -1,0 +1,20 @@
+Since the importation of csv files maybe not entirely straight forward here is an guide on how do set it up:
+
+Step 1, create the file:
+It does not matter where the files is placed or what it is called as long as it is a csv file.
+
+Step 2, insert data:
+When adding the data to the csv file 3 things are important.
+1, the data must be in the order as below. Ie the columns can not be moved around.
+2, The titles can not be changed and must remain as what is written below.
+3, The date field should be written as YYYY/MM/DD, otherwise it will fail.
+
+Ex data:
+Amount,Currency,Category,Date,Description
+200,SEK,Housing,2020/03/12,testing
+200,DKK,Food,2019/10/19,fixa balance 
+10,SEK,Food,2000/10/22,test
+
+Step 4, add the data in main function:
+Now run the program and navigate to add expense and there choose csv.
+Then input the path of your csv file and if there everything is set up correctly and the account balance is greater and what you want to add it will be added.

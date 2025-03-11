@@ -13,6 +13,7 @@ export interface Account {
   limit_account? : number
 }
 
+
 /**
 * Creates a new account in the mongodb account database.
 * @param {Account} account - The account that should be created in database.
@@ -38,7 +39,7 @@ async function createAccount(account: Account) : Promise<void> {
 async function getAccount(username: string) : Promise<Account | undefined | null> {
   const db = await connectDB();
   if (!db) return;
-  return db.collection(COLLECTION_NAME).findOne({username}) as unknown as Account;
+  return db.collection(COLLECTION_NAME).findOne({username},{projection : {_id : 0}} ) as unknown as Account;
 }
 
 /**
